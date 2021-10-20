@@ -83,7 +83,7 @@ parser.add_argument('--image-loss', default='dice',
                     help='image reconstruction loss - can be mse or ncc (default: mse)')
 parser.add_argument('--image-sigma', type=float, default=0.05,
                     help='estimated image noise for mse image scaling (default: 0.05)')
-parser.add_argument('--oversample-rate', type=float, default=0.1,
+parser.add_argument('--oversample-rate', type=float, default=0.05,
                     help='hyperparameter end-point over-sample rate (default 0.2)')
 args = parser.parse_args()
 
