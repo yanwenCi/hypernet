@@ -55,12 +55,12 @@ parser.add_argument('--test-reg', nargs=3,
 # training parameters
 parser.add_argument('--gpu', default='2', help='GPU ID numbers (default: 0)')
 parser.add_argument('--batch-size', type=int, default=1, help='batch size (default: 1)')
-parser.add_argument('--epochs', type=int, default=6000,
+parser.add_argument('--epochs', type=int, default=600,
                     help='number of training epochs (default: 6000)')
 parser.add_argument('--steps-per-epoch', type=int, default=500,
                     help='steps per epoch (default: 100)')
 parser.add_argument('--load-weights', help='optional weights file to initialize with')
-parser.add_argument('--initial-epoch', type=int, default=78,
+parser.add_argument('--initial-epoch', type=int, default=0,
                     help='initial epoch number (default: 0)')
 parser.add_argument('--lr', type=float, default=1e-6, help='learning rate (default: 1e-4)')
 
@@ -207,6 +207,9 @@ with tf.device(device):
         image_loss2 = vxm.losses.HyperBinaryDiceLoss(0).loss
         image_loss3 = vxm.losses.HyperBinaryDiceLoss(0).loss
         image_loss_func = vxm.losses.HyperBinaryDiceLoss(args.mod).loss
+        ce_loss = tf.keras.losses.BinaryCrossentropy(
+            from_logits=True, label_smoothing=0, name='binary_crossentropy'
+                )
     elif args.image_loss == 'mse':
         scaling = 1.0 / (args.image_sigma ** 2)
         image_loss_func = lambda x1, x2: scaling * K.mean(K.batch_flatten(K.square(x1 - x2)), -1)
@@ -215,8 +218,8 @@ with tf.device(device):
 
     # prepare loss functions and compile model
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
-                                                                                   image_loss_func])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss1, image_loss2, image_loss3,
+                                                                                   image_loss_func], loss_weights=[0.1,0.1,0.1,0.7])
 
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch')
     logger = tf.keras.callbacks.CSVLogger(
