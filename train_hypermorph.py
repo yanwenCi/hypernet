@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Example script for training a HyperMorph model to tune the
 regularization weight hyperparameter.
@@ -83,7 +81,7 @@ parser.add_argument('--image-loss', default='dice',
                     help='image reconstruction loss - can be mse or ncc (default: mse)')
 parser.add_argument('--image-sigma', type=float, default=0.05,
                     help='estimated image noise for mse image scaling (default: 0.05)')
-parser.add_argument('--oversample-rate', type=float, default=0.05,
+parser.add_argument('--oversample-rate', type=float, default=1,
                     help='hyperparameter end-point over-sample rate (default 0.2)')
 args = parser.parse_args()
 
@@ -127,14 +125,11 @@ hyperps = np.load('hyperp.npy')
 def random_hyperparam(hyper_num):
 
     if args.mod == 2:
-        #hyper_val = hyperps[100]
+        #hyper_val = hyperps[10]
         hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
         hyper_val =np.random.rand(hyper_num)
     return hyper_val
-
-
-
 
 def hyp_generator():
     while True:
@@ -218,8 +213,8 @@ with tf.device(device):
 
     # prepare loss functions and compile model
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss1, image_loss2, image_loss3,
-                                                                                   image_loss_func], loss_weights=[0.1,0.1,0.1,0.7])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
+                                                                                   image_loss_func])
 
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch')
     logger = tf.keras.callbacks.CSVLogger(

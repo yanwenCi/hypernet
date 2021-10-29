@@ -80,7 +80,7 @@ class hyperp_generator():
         y=torch.mm(x,p)
         y=torch.round(torch.sigmoid(y))
         yy=torch.round(self.model(self.X))
-        print(y.squeeze(), self.y.squeeze(), yy.squeeze())
+        #print(y.squeeze(), self.y.squeeze(), yy.squeeze())
         res_lreg = pred - self.y
 
         return a_lreg, res_lreg, self.y.data.cpu().numpy()
@@ -110,6 +110,6 @@ if __name__=='__main__':
             if hyp_g.generator() is not None:
                 i+=1
                 space.append(np.array(hyp_g.generator()[0].cpu().data))
-                #print (hyp_g.generator())
+                print (hyp_g.generator())
             #np.savetxt('hyper.txt', hyp_g.generator()[1].cpu().data)
-    np.save('hyperp.npy', np.array(space))
+    ##np.save('hyperp.npy', np.array(space))

@@ -189,9 +189,9 @@ def multi_mods_gen(vol_names,  batch_size=1,  **kwargs):
 
     while True:
         scan1, scan2, scan3, msk= next(gen)
-        invols = [scan1, scan1, scan1]
-        outvols =[msk, msk, msk, msk]
-        #outvols = [msk]
+        invols = [scan3, scan2, scan1]
+        #outvols =[msk, msk, msk, msk]
+        outvols = [msk]
         yield (invols, outvols)
 
 def scan_to_atlas(vol_names, atlas, bidir=False, batch_size=1, no_warp=False, segs=None, **kwargs):
