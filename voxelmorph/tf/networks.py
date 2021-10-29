@@ -1216,6 +1216,134 @@ class HyperVxmDense(ne.modelio.LoadableModel):
         self.references.pos_flow = pos_flow
         self.references.neg_flow = neg_flow if bidir else None
 
+class Unet3(tf.keras.Model):
+    """
+    A unet architecture that builds off either an input keras model or input shape. Layer features
+    can be specified directly as a list of encoder and decoder features or as a single integer along
+    with a number of unet levels. The default network features per layer (when no options are
+    specified) are:
+
+        encoder: [16, 32, 32, 32]
+        decoder: [32, 32, 32, 32, 32, 16, 16]
+
+    This network specifically does not subclass LoadableModel because it's meant to be a core,
+    internal model for more complex networks, and is not meant to be saved/loaded independently.
+    """
+
+    def __init__(self,
+                 inshape=None,
+                 input_model=None,
+                 nb_features=None,
+                 nb_levels=None,
+                 max_pool=2,
+                 feat_mult=1,
+                 nb_conv_per_level=1,
+                 do_res=False,
+                 half_res=False,
+                 hyp_input=None,
+                 hyp_tensor=None,
+                 final_activation_function=None,
+                 name='unet'):
+
+
+        # have the option of specifying input shape or input model
+        if input_model is None:
+            if inshape is None:
+                raise ValueError('inshape must be supplied if input_model is None')
+            unet_input = KL.Input(shape=inshape, name='%s_input' % name)
+            model_inputs = [unet_input]
+        else:
+            if len(input_model.outputs) == 1:
+                unet_input = input_model.outputs[0]
+            else:
+                unet_input = KL.concatenate(input_model.outputs, name='%s_input_concat' % name)
+            model_inputs = input_model.inputs
+
+        # add hyp_input tensor if provided
+        if hyp_input is not None:
+            model_inputs = model_inputs + [hyp_input]
+
+        # default encoder and decoder layer features if nothing provided
+        if nb_features is None:
+            nb_features = default_unet_features()
+
+        # build feature list automatically
+        if isinstance(nb_features, int):
+            if nb_levels is None:
+                raise ValueError('must provide unet nb_levels if nb_features is an integer')
+            feats = np.round(nb_features * feat_mult ** np.arange(nb_levels)).astype(int)
+            nb_features = [
+                np.repeat(feats[:-1], nb_conv_per_level),
+                np.repeat(np.flip(feats), nb_conv_per_level)
+            ]
+        elif nb_levels is not None:
+            raise ValueError('cannot use nb_levels if nb_features is not an integer')
+
+        ndims = len(unet_input.get_shape()) - 2
+        assert ndims in (1, 2, 3), 'ndims should be one of 1, 2, or 3. found: %d' % ndims
+        MaxPooling = getattr(KL, 'MaxPooling%dD' % ndims)
+
+        # extract any surplus (full resolution) decoder convolutions
+        enc_nf, dec_nf = nb_features
+        nb_dec_convs = len(enc_nf)
+        final_convs = dec_nf[nb_dec_convs:]
+        dec_nf = dec_nf[:nb_dec_convs]
+        nb_levels = int(nb_dec_convs / nb_conv_per_level) + 1
+
+        if isinstance(max_pool, int):
+            max_pool = [max_pool] * nb_levels
+
+        # configure encoder (down-sampling path)
+        enc_layers = []
+        last = unet_input
+        for level in range(nb_levels - 1):
+            for conv in range(nb_conv_per_level):
+                nf = enc_nf[level * nb_conv_per_level + conv]
+                layer_name = '%s_enc_conv_%d_%d' % (name, level, conv)
+                last = _conv_block(last, nf, name=layer_name, do_res=do_res, hyp_tensor=hyp_tensor)
+            enc_layers.append(last)
+
+            # temporarily use maxpool since downsampling doesn't exist in keras
+            last = MaxPooling(max_pool[level], name='%s_enc_pooling_%d' % (name, level))(last)
+
+        # if final_activation_function is set, we need to build a utility that checks
+        # which layer is truly the last, so we know not to apply the activation there
+        if final_activation_function is not None and len(final_convs) == 0:
+            activate = lambda lvl, c: not (lvl == (nb_levels - 2) and c == (nb_conv_per_level - 1))
+        else:
+            activate = lambda lvl, c: True
+
+        # configure decoder (up-sampling path)
+        for level in range(nb_levels - 1):
+            real_level = nb_levels - level - 2
+            for conv in range(nb_conv_per_level):
+                nf = dec_nf[level * nb_conv_per_level + conv]
+                layer_name = '%s_dec_conv_%d_%d' % (name, real_level, conv)
+                last = _conv_block(last, nf, name=layer_name, do_res=do_res, hyp_tensor=hyp_tensor,
+                                   include_activation=activate(level, conv))
+            if not half_res or level < (nb_levels - 2):
+                layer_name = '%s_dec_upsample_%d' % (name, real_level)
+                last = _upsample_block(last, enc_layers.pop(), factor=max_pool[real_level],
+                                       name=layer_name)
+
+        # now build function to check which of the 'final convs' is really the last
+        if final_activation_function is not None:
+            activate = lambda n: n != (len(final_convs) - 1)
+        else:
+            activate = lambda n: True
+
+        # now we take care of any remaining convolutions
+        for num, nf in enumerate(final_convs):
+            layer_name = '%s_dec_final_conv_%d' % (name, num)
+            last = _conv_block(last, nf, name=layer_name, hyp_tensor=hyp_tensor,
+                               include_activation=activate(num))
+
+        # add the final activation function is set
+        if final_activation_function is not None:
+            last = KL.Activation(final_activation_function, name='%s_final_activation' % name)(last)
+
+        super().__init__(inputs=model_inputs, outputs=last, name=name)
+
 
 class HyperUnetDense(ne.modelio.LoadableModel):
     """
@@ -1235,7 +1363,6 @@ class HyperUnetDense(ne.modelio.LoadableModel):
                  nb_hyp_params=3,
                  nb_hyp_layers=4,
                  nb_hyp_units=64,
-
                  name='hyper'):
         """
         Parameters:
@@ -1337,6 +1464,8 @@ class HyperUnetDense(ne.modelio.LoadableModel):
         outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
         weight_sum_layer = weight_sum(dim=ndims)
         outputs = weight_sum_layer(outputs,hyp_input[0, ...])
+        if hyp_input[0,...].shape==3:
+            outputs = outputs/tf.reduce_sum(hyp_input[0,...])
 
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
 
