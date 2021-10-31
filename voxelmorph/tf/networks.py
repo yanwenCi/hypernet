@@ -1463,9 +1463,8 @@ class HyperUnetDense(ne.modelio.LoadableModel):
         #outputs = tf.concat(output_list, -1)
         outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
         weight_sum_layer = weight_sum(dim=ndims)
-        outputs = weight_sum_layer(outputs,hyp_input[0, ...])
-        #if hyp_input[0,...].shape==3:
-        #   outputs = outputs
+        outputs = weight_sum_layer(outputs,hyp_input[0,...])
+
 
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
 
