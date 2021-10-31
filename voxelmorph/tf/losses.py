@@ -53,7 +53,8 @@ class HyperBinaryDiceLoss:
 
     def loss(self, target, output):
         #in y_true, y_pred order
-        if self.args==2:
+        
+	if self.args==2:
             warped = self.sigmoid(output)
             #warped = self.sigmoid(self.weight_sum(tf.concat((output,tf.ones_like(target)), -1),self.hyperparam))
         # elif self.args==1:
@@ -61,7 +62,7 @@ class HyperBinaryDiceLoss:
         #                         self.hyperparam)/4
         else:
             #warped = self.weight_sum(output,self.hyperparam)/tf.reduce_sum(self.hyperparam)
-            warped = output
+            warped = output/3
             #warped = K.sum(output, axis=-1)
 
         ndims = len(warped.get_shape().as_list()) - 2
