@@ -125,8 +125,8 @@ hyperps = np.load('hyperp.npy')
 def random_hyperparam(hyper_num):
 
     if args.mod == 2:
-        hyper_val = hyperps[12]
-        #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
+        #hyper_val = hyperps[12]
+        hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
         hyper_val =np.random.rand(hyper_num)
     return hyper_val
