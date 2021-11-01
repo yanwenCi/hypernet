@@ -938,7 +938,8 @@ class Unet(tf.keras.Model):
                  hyp_input=None,
                  hyp_tensor=None,
                  final_activation_function=None,
-                 name='unet'):
+                 name='unet',
+                 output_nc=None):
         """
         Parameters:
             inshape: Optional input tensor shape (including features). e.g. (192, 192, 192, 2).
@@ -1049,8 +1050,8 @@ class Unet(tf.keras.Model):
         for num, nf in enumerate(final_convs):
             layer_name = '%s_dec_final_conv_%d' % (name, num)
             last = _conv_block(last, nf, name=layer_name, hyp_tensor=hyp_tensor,
-                               include_activation=activate(num))
-        last = _final_conv_block(last, 1, strides=1, name='%s_fully_conv' % (name), hyp_tensor=hyp_tensor)
+                               include_activation=activate(num+1))
+        last = _final_conv_block(last, output_nc,  strides=1, name='%s_fully_conv' % (name), hyp_tensor=hyp_tensor)
 
         # add the final activation function is set
         if final_activation_function is not None:
@@ -1423,7 +1424,8 @@ class HyperUnetDense(ne.modelio.LoadableModel):
             hyp_input=hyp_input,
             hyp_tensor=hyp_last,
             final_activation_function='sigmoid',
-            name='%s_unet%d' % (name, i)
+            name='%s_unet%d' % (name, i),
+            output_nc=trg_feats
         )
             output_list.append(unet_model1.output)
 #        unet_model2 = Unet(
