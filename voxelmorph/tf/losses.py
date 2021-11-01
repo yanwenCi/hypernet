@@ -62,7 +62,7 @@ class HyperBinaryDiceLoss:
         #                         self.hyperparam)/4
         else:
             #warped = self.weight_sum(output,self.hyperparam)/tf.reduce_sum(self.hyperparam)
-            warped = output/3
+            warped = output
             #warped = K.sum(output, axis=-1)
 
         ndims = len(warped.get_shape().as_list()) - 2

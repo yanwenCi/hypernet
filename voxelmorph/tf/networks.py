@@ -1411,9 +1411,9 @@ class HyperUnetDense(ne.modelio.LoadableModel):
                                 name='%s_hyp_%d' % (name, n + 1))(hyp_last)
 
         # build core unet model and grab inputs
-        for input_model in (input_model1, input_model2, input_model3):
-            unet_model1 = Unet(
-            input_model=input_model,
+        #for input_model in (input_model1, input_model2, input_model3):
+        unet_model1 = Unet(
+            input_model=input_model1,
             nb_features=nb_unet_features,
             nb_levels=nb_unet_levels,
             feat_mult=unet_feat_mult,
