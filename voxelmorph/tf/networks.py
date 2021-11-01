@@ -1050,6 +1050,7 @@ class Unet(tf.keras.Model):
             layer_name = '%s_dec_final_conv_%d' % (name, num)
             last = _conv_block(last, nf, name=layer_name, hyp_tensor=hyp_tensor,
                                include_activation=activate(num))
+        last = _final_conv_block(last, 1, strides=1, name='%s_fully_conv' % (name), hyp_tensor=hyp_tensor)
 
         # add the final activation function is set
         if final_activation_function is not None:
@@ -1538,6 +1539,29 @@ def _conv_block(x, nfeat, strides=1, name=None, do_res=False, hyp_tensor=None,
         convolved = KL.LeakyReLU(0.2, name=name)(convolved)
 
     return convolved
+
+
+def _final_conv_block(x, nfeat, strides=1, name=None, hyp_tensor=None):
+    """
+    Specific convolutional block followed by leakyrelu for unet.
+    """
+    ndims = len(x.get_shape()) - 2
+    assert ndims in (1, 2, 3), 'ndims should be one of 1, 2, or 3. found: %d' % ndims
+
+    extra_conv_params = {}
+    if hyp_tensor is not None:
+        Conv = getattr(ne.layers, 'HyperConv%dDFromDense' % ndims)
+        conv_inputs = [x, hyp_tensor]
+    else:
+        Conv = getattr(KL, 'Conv%dD' % ndims)
+        extra_conv_params['kernel_initializer'] = 'he_normal'
+        conv_inputs = x
+
+    convolved = Conv(nfeat, kernel_size=1, padding='same',
+                     strides=strides, name=name, **extra_conv_params)(conv_inputs)
+
+    return convolved
+
 
 
 def _upsample_block(x, connection, factor=2, name=None):

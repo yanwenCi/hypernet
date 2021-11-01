@@ -170,7 +170,7 @@ os.makedirs(model_dir, exist_ok=True)
 
 # unet architecture
 enc_nf = args.enc if args.enc else [16, 32, 32, 32]
-dec_nf = args.dec if args.dec else [32, 32, 32, 32, 16, 1]
+dec_nf = args.dec if args.dec else [32, 32, 32, 32, 16]
 
 # prepare model checkpoint save path
 save_filename = os.path.join(model_dir, '{epoch:04d}.h5')
