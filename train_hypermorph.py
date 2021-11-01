@@ -28,7 +28,8 @@ import numpy as np
 import tensorflow as tf
 import voxelmorph as vxm
 from tensorflow.keras import backend as K
-from tqdm.keras import TqdmCallback
+from datetime import datetime
+#from tqdm.keras import TqdmCallback
 #tf.compat.v1.disable_eager_execution()
 
 from tensorflow.python.framework.ops import disable_eager_execution
@@ -89,25 +90,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 gpu_avilable = tf.config.experimental.list_physical_devices('GPU')
 print(gpu_avilable)
 
-def read_file_list(filename, prefix=None, suffix=None):
-    '''
-    Reads a list of files from a line-seperated text file.
-
-    Parameters:
-        filename: Filename to load.
-        prefix: File prefix. Default is None.
-        suffix: File suffix. Default is None.
-    '''
-    with open(filename, 'r') as file:
-        content = file.readlines()
-    #filelist = [x.strip() for x in content if x.strip()]
-    filelist = [x.split(' ')[0] for  x in content]
-    if prefix is not None:
-        filelist = [prefix + f for f in filelist]
-    if suffix is not None:
-        filelist = [f + suffix for f in filelist]
-    return filelist
-# load and prepare training data
+logdir = args.model_dir+"/logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
@@ -221,16 +205,17 @@ with tf.device(device):
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
     )
-    model.fit(generator,initial_epoch=args.initial_epoch,
+    training_history = model.fit(generator,initial_epoch=args.initial_epoch,
                         epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
-                        callbacks=[save_callback, logger], verbose=1,
+                        callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
                         validation_steps=validation_steps,
                         validation_data=generator_valid)
 
     # save final weights
     model.save(save_filename.format(epoch=args.epochs))
-
+    print("Average test loss: ", np.average(training_history.history['loss']))
+    
     # save an example registration across lambda values
     if args.test_reg:
         moving = vxm.py.utils.load_volfile(args.test_reg[0], add_batch_axis=True,

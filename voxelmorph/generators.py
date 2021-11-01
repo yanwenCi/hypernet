@@ -117,9 +117,6 @@ def multivolgen(
                            pad_shape=pad_shape, resize_factor=resize_factor, crop_size=crop_size)
         for vol_names in [t2w_filenames, adc_filenames, dwi_filenames]:
             imgs = [py.utils.load_volfile(vol_names[i], **load_params) for i in indices]
-            # import matplotlib.pyplot as plt
-            # plt.imshow(imgs[0][0,:,:,47,0])
-            # plt.show()
             vols.append(np.concatenate(imgs, axis=0))
 
         # optionally load segmentations and concatenate
@@ -129,7 +126,14 @@ def multivolgen(
         s = [py.utils.load_volfile(msk_filenames[i], **load_params) for i in indices]
         vols.append(np.concatenate(s, axis=0))
         # import matplotlib.pyplot as plt
+        # plt.subplot(2,2,1)
         # plt.imshow(s[0][0,:,:,47,0])
+        # plt.subplot(2,2,2)
+        # plt.imshow(vols[0][0,:,:,47,0])
+        # plt.subplot(2,2,3)
+        # plt.imshow(vols[1][0,:,:,47,0])
+        # plt.subplot(2,2,4)
+        # plt.imshow(vols[2][0,:,:,47,0])
         # plt.show()
         yield tuple(vols)
 
