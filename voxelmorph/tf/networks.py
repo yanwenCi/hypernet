@@ -1411,9 +1411,9 @@ class HyperUnetDense(ne.modelio.LoadableModel):
                                 name='%s_hyp_%d' % (name, n + 1))(hyp_last)
 
         # build core unet model and grab inputs
-        #for input_model in (input_model1, input_model2, input_model3):
-        unet_model1 = Unet(
-            input_model=input_model1,
+        for i, input_model in enumerate((input_model1, input_model2, input_model3)):
+            unet_model1 = Unet(
+            input_model=input_model,
             nb_features=nb_unet_features,
             nb_levels=nb_unet_levels,
             feat_mult=unet_feat_mult,
@@ -1422,47 +1422,39 @@ class HyperUnetDense(ne.modelio.LoadableModel):
             hyp_input=hyp_input,
             hyp_tensor=hyp_last,
             final_activation_function='sigmoid',
-            name='%s_unet1' % name
+            name='%s_unet%d' % (name, i)
         )
-            #output_list.append(unet_model1.output)
-        unet_model2 = Unet(
-            input_model=input_model2,
-            nb_features=nb_unet_features,
-            nb_levels=nb_unet_levels,
-            feat_mult=unet_feat_mult,
-            nb_conv_per_level=nb_unet_conv_per_level,
-            half_res=unet_half_res,
-            hyp_input=hyp_input,
-            hyp_tensor=hyp_last,
-            final_activation_function='sigmoid',
-            name='%s_unet2' % name
-        )
-        unet_model3 = Unet(
-            input_model=input_model3,
-            nb_features=nb_unet_features,
-            nb_levels=nb_unet_levels,
-            feat_mult=unet_feat_mult,
-            nb_conv_per_level=nb_unet_conv_per_level,
-            half_res=unet_half_res,
-            hyp_input=hyp_input,
-            hyp_tensor=hyp_last,
-            final_activation_function='sigmoid',
-            name='%s_unet3' % name
-        )
+            output_list.append(unet_model1.output)
+#        unet_model2 = Unet(
+#            input_model=input_model2,
+#            nb_features=nb_unet_features,
+#            nb_levels=nb_unet_levels,
+#            feat_mult=unet_feat_mult,
+#            nb_conv_per_level=nb_unet_conv_per_level,
+#            half_res=unet_half_res,
+#            hyp_input=hyp_input,
+#            hyp_tensor=hyp_last,
+#            final_activation_function='sigmoid',
+#            name='%s_unet2' % name
+#        )
+#        unet_model3 = Unet(
+#            input_model=input_model3,
+#            nb_features=nb_unet_features,
+#            nb_levels=nb_unet_levels,
+#            feat_mult=unet_feat_mult,
+#            nb_conv_per_level=nb_unet_conv_per_level,
+#            half_res=unet_half_res,
+#            hyp_input=hyp_input,
+#            hyp_tensor=hyp_last,
+#            final_activation_function='sigmoid',
+#            name='%s_unet3' % name
+#        )
 
-        # seg1=tf.keras.layers.Conv3D(1,kernel_size=1, strides=1, padding='same',
-        #                            activation='sigmoid')(unet_model1.output)
-        # seg2 = tf.keras.layers.Conv3D(1, kernel_size=1, strides=1, padding='same',
-        #                               activation='sigmoid')(unet_model2.output)
-        # seg3 = tf.keras.layers.Conv3D(1, kernel_size=1, strides=1, padding='same',
-        #                               activation='sigmoid')(unet_model3.output)
-        # optionally include probabilities
-        # sigmoid = tf.keras.layers.Activation('sigmoid')
-        # hyp_input =tf.tile( tf.expand_dims(tf.expand_dims(tf.expand_dims(hyp_input,1),1), 1),[1, 192, 192,96,1])
 
-        #outputs = tf.concat(output_list, -1)
-        outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
+        outputs = tf.concat(output_list, -1)
+        #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
         weight_sum_layer = weight_sum(dim=ndims)
+        #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
         outputs = weight_sum_layer(outputs,hyp_input[0,...])
 
 
