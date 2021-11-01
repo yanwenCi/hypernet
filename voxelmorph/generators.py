@@ -189,7 +189,7 @@ def multi_mods_gen(vol_names,  batch_size=1,  **kwargs):
 
     while True:
         scan1, scan2, scan3, msk= next(gen)
-        invols = [scan3, scan2, scan1]
+        invols = [scan1, scan2, scan3]
         #outvols =[msk, msk, msk, msk]
         outvols = [msk]
         yield (invols, outvols)
