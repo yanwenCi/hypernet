@@ -1464,7 +1464,7 @@ class HyperUnetDense(ne.modelio.LoadableModel):
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
 
         super().__init__(name=name, inputs=[source1, source2, source3, hyp_input], outputs=[
-                                       #                                                     unet_model1.output,unet_model2.output,unet_model3.output,
+          output_list[0],output_list[1], output_list[2],
                                                                                             outputs])
 
         # cache pointers to layers and tensors for future reference
