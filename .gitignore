@@ -1,4 +1,6 @@
+Pred_dir/
 __pycache__/
 checkpoints/
 data/data_lesion/
+results/
 scratch/*
