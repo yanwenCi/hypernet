@@ -107,9 +107,10 @@ def multivolgen_test(
     if len(t2w_filenames) != len(msk_filenames):
         raise ValueError('Number of image files must match number of seg files.')
 
-    while True:
+    for i in range(len(t2w_filenames)):
         # generate [batchsize] random image indices
-        indices = np.random.randint(len(t2w_filenames), size=batch_size)
+        #indices = np.random.randint(len(t2w_filenames), size=batch_size)
+        indices = [j for j in range(i, min((i+batch_size),len(t2w_filenames)))]
         vols=[]
         names=[]
         # load volumes and concatenate
@@ -136,7 +137,7 @@ def multivolgen_test(
         # plt.subplot(2,2,4)
         # plt.imshow(vols[2][0,:,:,47,0])
         # plt.show()
-        yield tuple(vols)
+        yield tuple(vols+names)
 
 def multivolgen(
     path,
@@ -261,7 +262,10 @@ def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
             Default if False.
         kwargs: Forwarded to the internal volgen generator.
     """
-    gen = multivolgen(vol_names, batch_size=batch_size,  **kwargs)
+    if test:
+        gen = multivolgen_test(vol_names, batch_size= batch_size, **kwargs)
+    else:
+        gen = multivolgen(vol_names, batch_size=batch_size,  **kwargs)
 
     while True:
         if test:
@@ -271,7 +275,10 @@ def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
         invols = [scan1, scan2,  scan3]
         outvols =[msk, msk, msk, msk]
         #outvols = [msk]
-        yield (invols, outvols)
+        if test:
+            yield (invols, outvols, name)
+        else:
+            yield (invols, outvols)
 
 def scan_to_atlas(vol_names, atlas, bidir=False, batch_size=1, no_warp=False, segs=None, **kwargs):
     """

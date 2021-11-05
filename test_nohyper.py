@@ -144,13 +144,12 @@ if not os.path.exists(save_file):
 results=[]
 with tf.device(device):
     # build the model
-    model = vxm.networks.HyperUnetDense(
+    model = vxm.networks.UnetDense(
         inshape=inshape,
         nb_unet_features=[enc_nf, dec_nf],
         src_feats=nfeats,
         trg_feats=nfeats,
-        unet_half_res=False,
-        nb_hyp_params=args.hyper_num)
+        unet_half_res=False)
     print(model.summary())
     # load initial weights (if provided)
 
@@ -158,19 +157,12 @@ with tf.device(device):
     print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
 
     # prepare image loss
-    hyper_val = model.references.hyper_val
-
-    if args.mod==2:
-        accuracy_func=vxm.losses.Dice(with_logits=False)
-    else:
-        accuracy_func = vxm.losses.Dice(with_logits=False)
+    accuracy_func=vxm.losses.Dice(with_logits=False)
 
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
-        hyper_val = random_hyperparam(args.hyper_num)
-        hyp = np.array([hyper_val for _ in range(args.batch_size)])
+
         inputs, outputs, name = data
-        inputs = (*inputs, hyp)
 
         predicted = model.predict(inputs)
         #predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
