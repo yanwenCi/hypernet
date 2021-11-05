@@ -214,7 +214,7 @@ with tf.device(device):
         model.load_weights(os.path.join(model_dir, '{:04d}.h5'.format(int(args.load_weights))))
         print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
 
-    test(model)
+    #test(model)
     # prepare image loss
     #hyper_val=model.references.hyper_val
     if args.image_loss == 'dice':
