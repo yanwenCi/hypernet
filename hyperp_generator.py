@@ -39,17 +39,17 @@ class HyperLinear(nn.Module):
 class hyperp_generator():
     def __init__(self, fix_hyp):
 
-        self.X = torch.tensor([
-        [1.0, 0.0, 0.0],
-        [1.0, 0.0, 1.0],
-        [1.0, 1.0, 0.0],
-        [1.0, 1.0, 1.0],
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0],
-        [0.0, 1.0, 0.0],
-        [0.0, 1.0, 1.0]
-        ]).cuda()
-
+        # self.X = torch.tensor([
+        # [1.0, 0.0, 0.0],
+        # [1.0, 0.0, 1.0],
+        # [1.0, 1.0, 0.0],
+        # [1.0, 1.0, 1.0],
+        # [0.0, 0.0, 0.0],
+        # [0.0, 0.0, 1.0],
+        # [0.0, 1.0, 0.0],
+        # [0.0, 1.0, 1.0]
+        # ]).cuda()
+        self.X = torch.tensor(np.random.uniform(low=-20, high=20, size=(8,3))).float().cuda()
         #for verify
 
         #p=torch.Tensor([-0.3570, 19.9367, -0.3570, -9.4176]).reshape(-1,1)
@@ -97,7 +97,7 @@ class hyperp_generator():
 
 if __name__=='__main__':
     import os
-    os.environ["CUDA_VISIBLE_DEVICES"]='1'
+    os.environ["CUDA_VISIBLE_DEVICES"]='2'
     space=[]
     i=0
     a=np.load('hyperp.npy')
@@ -112,4 +112,4 @@ if __name__=='__main__':
                 space.append(np.array(hyp_g.generator()[0].cpu().data))
                 print (hyp_g.generator())
             #np.savetxt('hyper.txt', hyp_g.generator()[1].cpu().data)
-    ##np.save('hyperp.npy', np.array(space))
+    np.save('hyperp_range20.npy', np.array(space))

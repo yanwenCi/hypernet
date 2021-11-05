@@ -31,38 +31,19 @@ class HyperBinaryDiceLoss:
     def __init__(self,  args):
         self.args=args
         #self.hyperparam=hyperp
-        self.sigmoid = tf.sigmoid
 
-    def weight_sum(self, I, hyper):
-        ndims = len(I.shape) - 2
-
-        # compute filters
-        sum_filt1 = tf.expand_dims(tf.expand_dims(tf.expand_dims(tf.expand_dims(hyper, 0),0),0),-1)
-        #sum_filt1 = tf.reshape(hyper, [1, hyper.shape, 1, 1,1]).to("cuda")
-
-        padding = 'SAME'
-
-        # get convolution function
-        conv_fn = getattr(tf.nn, 'conv%dd' % ndims)
-        strides = 1
-        if ndims > 1:
-            strides = [1] * (ndims + 2)
-        # compute CC squares
-        I_sum = conv_fn(I, sum_filt1, strides, padding=padding)
-        return I_sum
-
-    def loss(self, target, output):
+    def loss(self, target, warped):
         #in y_true, y_pred order
         
-        if self.args==2:
-            warped = self.sigmoid(output)
-            #warped = self.sigmoid(self.weight_sum(tf.concat((output,tf.ones_like(target)), -1),self.hyperparam))
-        # elif self.args==1:
-        #     warped = self.weight_sum(tf.concat((output, tf.ones_like(target)), -1),
-        #                         self.hyperparam)/4
-        else:
-            #warped = self.weight_sum(output,self.hyperparam)/tf.reduce_sum(self.hyperparam)
-            warped = output
+        # if self.args==2:
+        #     warped = tf.keras.activations.sigmoid(output)
+        #     #warped = self.sigmoid(self.weight_sum(tf.concat((output,tf.ones_like(target)), -1),self.hyperparam))
+        # # elif self.args==1:
+        # #     warped = self.weight_sum(tf.concat((output, tf.ones_like(target)), -1),
+        # #                         self.hyperparam)/4
+        # else:
+        #     #warped = self.weight_sum(output,self.hyperparam)/tf.reduce_sum(self.hyperparam)
+        #     warped = output
             #warped = K.sum(output, axis=-1)
 
         ndims = len(warped.get_shape().as_list()) - 2
@@ -188,18 +169,21 @@ class Dice:
     """
     N-D dice for segmentation
     """
+    def __init__(self, with_logits=False):
+        self.with_logits=with_logits
 
     def loss(self, y_true, y_pred):
-        ndims = len(y_pred.get_shape().as_list()) - 2
+        ndims = len(y_pred.shape) - 2
         vol_axes = list(range(1, ndims + 1))
-
+        if self.with_logits:
+            y_pred = tf.keras.activations.sigmoid(y_pred)
         top = 2 * tf.reduce_sum(y_true * y_pred, vol_axes)
         bottom = tf.reduce_sum(y_true + y_pred, vol_axes)
 
         div_no_nan = tf.math.divide_no_nan if hasattr(
             tf.math, 'divide_no_nan') else tf.div_no_nan  # pylint: disable=no-member
         dice = tf.reduce_mean(div_no_nan(top, bottom))
-        return 1-dice
+        return dice
 
 
 class Grad:

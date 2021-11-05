@@ -29,6 +29,8 @@ import tensorflow as tf
 import voxelmorph as vxm
 from tensorflow.keras import backend as K
 from datetime import datetime
+
+
 #from tqdm.keras import TqdmCallback
 #tf.compat.v1.disable_eager_execution()
 
@@ -109,8 +111,8 @@ hyperps = np.load('hyperp.npy')
 def random_hyperparam(hyper_num):
 
     if args.mod == 2:
-        hyper_val = hyperps[60]
-        #hyper_val = np.random.uniform(low=-20, high=20, size=(hyper_num,))
+        #hyper_val = hyperps[50]
+        hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
         #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
         hyper_val =np.random.rand(hyper_num)
@@ -162,6 +164,32 @@ save_filename = os.path.join(model_dir, '{epoch:04d}.h5')
 # tensorflow device handling
 device, nb_devices = vxm.tf.utils.setup_device(args.gpu)
 
+
+def test(model_test):
+    for i, data in enumerate(base_generator_valid):
+        hyper_val = random_hyperparam(args.hyper_num)
+        hyp = np.array([hyper_val for _ in range(args.batch_size)])
+        inputs, outputs = data
+        #inputs = (*inputs, hyp)
+
+        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[93].output)
+        feature1 = layer_model.predict(inputs)
+        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[94].output)
+        feature2 = layer_model.predict(inputs)
+        predicted = model_test.predict(inputs)
+        predicted=tf.keras.activations.sigmoid(predicted)
+        import matplotlib.pyplot as plt
+        plt.subplot(2,2,1)
+        plt.imshow(feature1[0,:,:,48,0])
+        plt.subplot(2, 2, 2)
+        plt.imshow(feature2[0, :, :, 48, 0])
+        plt.subplot(2, 2, 3)
+        plt.imshow(outputs[0][0, :, :, 48, 0])
+        plt.subplot(2, 2, 4)
+        plt.imshow(predicted[0, :, :, 48, 0])
+        plt.show()
+        #vxm.py.utils.save_volfile(predicted, 'example.nii')
+
 with tf.device(device):
 
     # build the model
@@ -172,15 +200,23 @@ with tf.device(device):
         trg_feats=nfeats,
         unet_half_res=False,
         nb_hyp_params=args.hyper_num)
+
+    # model = vxm.networks.UnetDense(
+    #     inshape=inshape,
+    #     nb_unet_features=[enc_nf, dec_nf],
+    #     src_feats=nfeats,
+    #     trg_feats=nfeats,
+    #     unet_half_res=False)
+
     print(model.summary())
     #load initial weights (if provided)
     if args.load_weights:
         model.load_weights(os.path.join(model_dir, '{:04d}.h5'.format(int(args.load_weights))))
         print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
 
-
+    #test(model)
     # prepare image loss
-    hyper_val=model.references.hyper_val
+    #hyper_val=model.references.hyper_val
     if args.image_loss == 'dice':
         #image_loss_func = vxm.losses.HyperBinaryDiceLoss(hyper_val, args.mod).loss
         image_loss1 = vxm.losses.HyperBinaryDiceLoss(0).loss
@@ -198,7 +234,8 @@ with tf.device(device):
 
     # prepare loss functions and compile model
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss1, image_loss2, image_loss3,
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
+        #image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
 
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch')
@@ -217,20 +254,4 @@ with tf.device(device):
     print("Average test loss: ", np.average(training_history.history['loss']))
     
     # save an example registration across lambda values
-    if args.test_reg:
-        moving = vxm.py.utils.load_volfile(args.test_reg[0], add_batch_axis=True,
-                                           add_feat_axis=add_feat_axis)
-        fixed = vxm.py.utils.load_volfile(args.test_reg[1], add_batch_axis=True,
-                                          add_feat_axis=add_feat_axis)
-        moved = []
 
-        # sweep across 20 values of lambda
-        #for i, hyp in enumerate(np.linspace(0, 1, 20)):
-        hyp = np.random.rand(1,args.hyper_num)  # reformat hyperparam
-        img = model.predict([moving, fixed, hyp])[0].squeeze()
-        moved.append(img)
-
-        moved = np.stack(moved, axis=-1)
-        if moved.ndim == 3:
-            moved = np.expand_dims(moved, axis=-2)  # if 2D, ensure multi-frame nifti
-        vxm.py.utils.save_volfile(moved, args.test_reg[2])

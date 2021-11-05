@@ -1346,6 +1346,125 @@ class Unet3(tf.keras.Model):
 
         super().__init__(inputs=model_inputs, outputs=last, name=name)
 
+class UnetDense(ne.modelio.LoadableModel):
+    """
+    HyperMorph-VxmDense network amortized hyperparameter learning.
+    """
+
+    @ne.modelio.store_config_args
+    def __init__(self,
+                 inshape,
+                 nb_unet_features=None,
+                 nb_unet_levels=None,
+                 unet_feat_mult=1,
+                 nb_unet_conv_per_level=1,
+                 src_feats=1,
+                 trg_feats=1,
+                 unet_half_res=False,
+                 name='hyper'):
+        """
+        Parameters:
+            inshape: Input shape. e.g. (192, 192, 192)
+            nb_unet_features: Unet convolutional features. Can be specified via a list of lists with
+                the form [[encoder feats], [decoder feats]], or as a single integer.
+                If None (default), the unet features are defined by the default config described in
+                the unet class documentation.
+            nb_unet_levels: Number of levels in unet. Only used when nb_unet_features is an integer.
+                Default is None.
+            unet_feat_mult: Per-level feature multiplier. Only used when nb_unet_features is an
+                integer. Default is 1.
+            nb_unet_conv_per_level: Number of convolutions per unet level. Default is 1.
+            int_steps: Number of flow integration steps. The warp is non-diffeomorphic when this
+                value is 0.
+            int_downsize: Integer specifying the flow downsample factor for vector integration.
+                The flow field is not downsampled when this value is 1.
+            bidir: Enable bidirectional cost function. Default is False.
+            use_probs: Use probabilities in flow field. Default is False.
+            src_feats: Number of source image features. Default is 1.
+            trg_feats: Number of target image features. Default is 1.
+            unet_half_res: Skip the last unet decoder upsampling. Requires that int_downsize=2.
+                Default is False.
+            name: Model name - also used as layer name prefix. Default is 'vxm_dense'.
+        """
+
+        # ensure correct dimensionality
+        ndims = len(inshape)
+        assert ndims in [1, 2, 3], 'ndims should be one of 1, 2, or 3. found: %d' % ndims
+        output_list=[]
+        # configure default input layers if an input model is not provided
+        source1 = tf.keras.Input(shape=(*inshape, src_feats), name='%s_source1_input' % name)
+        source2 = tf.keras.Input(shape=(*inshape, src_feats), name='%s_source2_input' % name)
+        source3 = tf.keras.Input(shape=(*inshape, src_feats), name='%s_source3_input' % name)
+
+        # input_model = tf.keras.Model(inputs=[source1,source2, source3], outputs=[source1, source2, source3])
+        input_model1 = tf.keras.Model(inputs=[source1], outputs=[source1])
+        input_model2 = tf.keras.Model(inputs=[source2], outputs=[source2])
+        input_model3 = tf.keras.Model(inputs=[source3], outputs=[source3])
+        # build hypernetwork
+
+        # build core unet model and grab inputs
+        for i, input_model in enumerate((input_model1, input_model2, input_model3)):
+            unet_model1 = Unet(
+            input_model=input_model,
+            nb_features=nb_unet_features,
+            nb_levels=nb_unet_levels,
+            feat_mult=unet_feat_mult,
+            nb_conv_per_level=nb_unet_conv_per_level,
+            half_res=unet_half_res,
+            hyp_input=None,
+            hyp_tensor=None,
+            final_activation_function=None,
+            name='%s_unet%d' % (name,i),
+            output_nc=trg_feats
+        )
+            output_list.append(unet_model1.output)
+        # unet_model2 = Unet(
+        #    input_model=input_model2,
+        #    nb_features=nb_unet_features,
+        #    nb_levels=nb_unet_levels,
+        #    feat_mult=unet_feat_mult,
+        #    nb_conv_per_level=nb_unet_conv_per_level,
+        #    half_res=unet_half_res,
+        #     hyp_input=None,
+        #     hyp_tensor=None,
+        #    final_activation_function='sigmoid',
+        #    name='%s_unet2' % name,
+        #     output_nc=trg_feats
+        # )
+        # unet_model3 = Unet(
+        #    input_model=input_model3,
+        #    nb_features=nb_unet_features,
+        #    nb_levels=nb_unet_levels,
+        #    feat_mult=unet_feat_mult,
+        #    nb_conv_per_level=nb_unet_conv_per_level,
+        #    half_res=unet_half_res,
+        #     hyp_input=None,
+        #     hyp_tensor=None,
+        #    final_activation_function='sigmoid',
+        #    name='%s_unet3' % name,
+        #     output_nc=trg_feats
+        # )
+
+
+        outputs = tf.concat(output_list, -1)
+        #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
+        weight_sum_layer = tf.keras.layers.Conv3D(filters=1, kernel_size=(1,1,1), activation='sigmoid', name='final_concat')
+        #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
+        outputs = weight_sum_layer(outputs)
+
+
+        # outputs =  tf.concat((seg1,seg2,seg3),-1)
+
+        super().__init__(name=name, inputs=[source1, source2, source3], outputs=[
+          #output_list[0],output_list[1], output_list[2],
+                                                                                            outputs])
+
+        # cache pointers to layers and tensors for future reference
+        self.references = ne.modelio.LoadableModel.ReferenceContainer()
+        self.references.unet_model = unet_model1
+        self.references.y_source = outputs
+
+
 
 class HyperUnetDense(ne.modelio.LoadableModel):
     """
@@ -1423,7 +1542,7 @@ class HyperUnetDense(ne.modelio.LoadableModel):
             half_res=unet_half_res,
             hyp_input=hyp_input,
             hyp_tensor=hyp_last,
-            final_activation_function='sigmoid',
+            final_activation_function=None,
             name='%s_unet%d' % (name, i),
             output_nc=trg_feats
         )
@@ -1459,12 +1578,12 @@ class HyperUnetDense(ne.modelio.LoadableModel):
         weight_sum_layer = weight_sum(dim=ndims)
         #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
         outputs = weight_sum_layer(outputs,hyp_input[0,...])
-
+        outputs = tf.keras.activations.sigmoid(outputs)
 
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
 
         super().__init__(name=name, inputs=[source1, source2, source3, hyp_input], outputs=[
-          output_list[0],output_list[1], output_list[2],
+          #output_list[0],output_list[1], output_list[2],
                                                                                             outputs])
 
         # cache pointers to layers and tensors for future reference

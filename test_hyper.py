@@ -1,16 +1,14 @@
-#!/usr/bin/env python
-
 """
-Example script to test a segmentation network trained in an unsupervised fashion, using a
-probabilistic atlas and unlabeled scans.
+Example script for training a HyperMorph model to tune the
+regularization weight hyperparameter.
 
-If you use this code, please cite the following 
-    Unsupervised deep learning for Bayesian brain MRI segmentation 
-    A.V. Dalca, E. Yu, P. Golland, B. Fischl, M.R. Sabuncu, J.E. Iglesias 
-    MICCAI 2019.
-    arXiv https://arxiv.org/abs/1904.11319
+If you use this code, please cite the following:
 
-Copyright 2020 Adrian V. Dalca
+    A Hoopes, M Hoffmann, B Fischl, J Guttag, AV Dalca.
+    HyperMorph: Amortized Hyperparameter Learning for Image Registration
+    IPMI: Information Processing in Medical Imaging. 2021. https://arxiv.org/abs/2101.01035
+
+Copyright 2020 Andrew Hoopes
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
 compliance with the License. You may obtain a copy of the License at
@@ -24,155 +22,164 @@ License.
 """
 
 import os
+import random
 import argparse
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import backend as K
 import voxelmorph as vxm
+from tensorflow.keras import backend as K
+from datetime import datetime
+# from tqdm.keras import TqdmCallback
+# tf.compat.v1.disable_eager_execution()
 
+from tensorflow.python.framework.ops import disable_eager_execution
 
+# disable_eager_execution()
+# tf.executing_eagerly()
+# tf.eagerly()
 # parse the commandline
 parser = argparse.ArgumentParser()
-parser.add_argument('image', help='input image to test')
-parser.add_argument('seg', help='output segmentation file')
-parser.add_argument('--model', required=True, help='keras model file')
-parser.add_argument('--atlas', required=True, help='atlas npz file')
-parser.add_argument('--mapping', required=True, help='atlas mapping filename')
-parser.add_argument('--gpu', help='GPU number - if not supplied, CPU is used')
-parser.add_argument("--max-feats", default=21,
-                    help='number of label posteriors to compute on GPU at once')
-parser.add_argument('--warped-atlas', help='save warped atlas to output vol file')
-parser.add_argument('--posteriors', help='save posteriors to output vol file')
-parser.add_argument('--warp', help='save warp to output vol file')
-parser.add_argument('--stats', help='save stats to output npz file')
+
+# data organization parameters
+parser.add_argument('--img-list', required=True, help='line-seperated list of training files')
+parser.add_argument('--img-prefix', help='optional input image file prefix')
+parser.add_argument('--img-suffix', help='optional input image file suffix')
+parser.add_argument('--hyper_gen', help='atlas filename')
+parser.add_argument('--model-dir', default='models',
+                    help='model output directory (default: models)')
+parser.add_argument('--pred-dir', default='Pred_dir')
+parser.add_argument('--multichannel', action='store_true',
+                    help='specify that data has multiple channels')
+parser.add_argument('--test-reg', nargs=3,
+                    help='example registration pair and result (moving fixed moved) to test')
+
+# training parameters
+parser.add_argument('--gpu', default='2', help='GPU ID numbers (default: 0)')
+parser.add_argument('--batch-size', type=int, default=1, help='batch size (default: 1)')
+parser.add_argument('--epochs', type=int, default=600,
+                    help='number of training epochs (default: 6000)')
+parser.add_argument('--steps-per-epoch', type=int, default=500,
+                    help='steps per epoch (default: 100)')
+parser.add_argument('--load-weights', required = True, help='optional weights file to initialize with')
+parser.add_argument('--initial-epoch', type=int, default=0,
+                    help='initial epoch number (default: 0)')
+parser.add_argument('--lr', type=float, default=1e-6, help='learning rate (default: 1e-4)')
+
+# network architecture parameters
+parser.add_argument('--enc', type=int, nargs='+',
+                    help='list of unet encoder filters (default: 16 32 32 32)')
+parser.add_argument('--dec', type=int, nargs='+',
+                    help='list of unet decorder filters (default: 32 32 32 32 32 16 16)')
+parser.add_argument('--int-steps', type=int, default=7,
+                    help='number of integration steps (default: 7)')
+parser.add_argument('--int-downsize', type=int, default=2,
+                    help='flow downsample factor for integration (default: 2)')
+
+# loss hyperparameters
+parser.add_argument('--mod', type=int, default=None)
+parser.add_argument('--hyper_num', type=int, default=3)
+
+parser.add_argument('--image-loss', default='dice',
+                    help='image reconstruction loss - can be mse or ncc (default: mse)')
+parser.add_argument('--image-sigma', type=float, default=0.05,
+                    help='estimated image noise for mse image scaling (default: 0.05)')
+parser.add_argument('--oversample-rate', type=float, default=1,
+                    help='hyperparameter end-point over-sample rate (default 0.2)')
 args = parser.parse_args()
 
-# load reference atlas (group labels in tissue types if necessary)
-atlas_full = vxm.py.utils.load_volfile(args.atlas, add_batch_axis=True)
-mapping = np.load(args.mapping)['mapping'].astype('int').flatten()
-assert len(mapping) == atlas_full.shape[-1], \
-    'mapping shape %d is inconsistent with atlas shape %d' % (len(mapping), atlas_full.shape[-1])
-nb_labels = int(1 + np.max(mapping))
-atlas = np.zeros([*atlas_full.shape[:-1], nb_labels])
-for i in range(np.max(mapping.shape)):
-    atlas[0, ..., mapping[i]] = atlas[0, ..., mapping[i]] + atlas_full[0, ..., i]
+os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+gpu_avilable = tf.config.experimental.list_physical_devices('GPU')
+print(gpu_avilable)
 
-# get input shape
-inshape = atlas.shape[1:-1]
+def random_hyperparam(hyper_num):
 
-# load input scan
-image, affine = vxm.py.utils.load_volfile(
-    args.image, add_batch_axis=True, add_feat_axis=True, ret_affine=True)
-
-
-# define an isolated method of computing posteriors
-def make_k_functions(vol_shape, mapping, max_feats=None, norm_post=True):
-    """
-    Utility to build keras (gpu-runnable) functions that will warp the atlas and compute
-    posteriors given the original full atlas and unnormalized log likelihood.
-
-    norm_post (True): normalize posterior? Thi sis faster on GPU, so if possible should 
-        be set to True
-    max_feats (None): since atlas van be very large, warping full atlas can run out of memory on 
-        current GPUs. 
-        Providing a number here will avoid OOM error, and will return several keras functions that 
-        each provide  the posterior computation for at most max_feats nb_full_labels. Stacking the 
-        result of calling these functions will provide an *unnormalized* posterior (since it can't
-         properly normalize)
-    """
-    nb_full_labels = len(mapping)
-    nb_labels = np.max(mapping) + 1
-
-    # compute maximum features and whether to return single function
-    return_single_fn = max_feats is None
-    if max_feats is None:
-        max_feats = nb_full_labels
+    if args.mod == 2:
+        hyper_val = hyperps[60]
+        #hyper_val = np.random.uniform(low=-20, high=20, size=(hyper_num,))
+        #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
-        assert not norm_post, 'cannot do normalized posterior if providing max_feats'
+        hyper_val =np.random.rand(hyper_num)
+    return hyper_val
 
-    # prepare ull and
-    ull = tf.placeholder(tf.float32, vol_shape + (nb_labels, ))
-    input_flow = tf.placeholder(tf.float32, vol_shape + (len(vol_shape), ))
-    ul_pred = K.exp(ull)
+logdir = args.model_dir + "/logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
-    funcs = []
-    for i in range(0, nb_full_labels, max_feats):
-        end = min(i + max_feats, nb_full_labels)
-        this_atlas_full_shape = vol_shape + (end - i, )
-        this_mapping = mapping[i:end]
+# no need to append an extra feature axis if data is multichannel
+add_feat_axis = not args.multichannel
+# scan-to-scan generator
+base_generator = vxm.generators.multi_mods_gen(
+    args.img_list, phase='test', batch_size=args.batch_size, test= True, add_feat_axis=add_feat_axis)
+# random hyperparameter generator
 
-        # prepare atlas input
-        input_atlas = tf.placeholder(tf.float32, this_atlas_full_shape)
-
-        # warp atlas
-        warped = vxm.tf.ne.transform(input_atlas, input_flow, interp_method='linear', indexing='ij')
-
-        # normalized posterior
-        post_lst = [ul_pred[..., this_mapping[j]] * warped[..., j]
-                    for j in range(len(this_mapping))]
-        posterior = K.stack(post_lst, -1)
-
-        funcs.append(K.function([input_atlas, ull, input_flow], [posterior, warped]))
-
-    if return_single_fn:
-        if norm_post:
-            posterior = posterior / (1e-12 + K.sum(posterior, -1, keepdims=True))
-        funcs = funcs.append(K.function([input_atlas, ull, input_flow], [posterior, warped]))
-
-    return funcs
+hyperps = np.load('hyperp.npy')
 
 
+if args.mod > 0:
+    # weighted 0
+    # logic 1
+    args.hyper_num += 1
+
+# extract shape and number of features from sampled input
+sample_shape = next(base_generator)[0][0].shape
+inshape = sample_shape[1:-1]
+nfeats = sample_shape[-1]
+
+# prepare model folder
+model_dir = args.model_dir
+os.makedirs(model_dir, exist_ok=True)
+
+# unet architecture
+enc_nf = args.enc if args.enc else [16, 32, 32, 32]
+dec_nf = args.dec if args.dec else [32, 32, 32, 32, 16]
+
+# prepare model checkpoint save path
+save_filename = os.path.join(model_dir, '{epoch:04d}.h5')
+accuracy_all=[]
 # tensorflow device handling
 device, nb_devices = vxm.tf.utils.setup_device(args.gpu)
-
+save_file = os.path.join(args.pred_dir, args.model_dir.split('/')[-1])
+if not os.path.exists(save_file):
+    os.makedirs(save_file)
+results=[]
 with tf.device(device):
+    # build the model
+    model = vxm.networks.HyperUnetDense(
+        inshape=inshape,
+        nb_unet_features=[enc_nf, dec_nf],
+        src_feats=nfeats,
+        trg_feats=nfeats,
+        unet_half_res=False,
+        nb_hyp_params=args.hyper_num)
+    print(model.summary())
+    # load initial weights (if provided)
 
-    # get k-functions for posterior
-    funcs = make_k_functions(inshape, mapping, max_feats=args.max_feats, norm_post=False)
+    model.load_weights(os.path.join(model_dir, '{:04d}.h5'.format(int(args.load_weights))))
+    print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
 
-    # load the model from file
-    model = vxm.networks.ProbAtlasSegmentation.load(args.model).get_gaussian_warp_model()
+    # prepare image loss
+    hyper_val = model.references.hyper_val
 
-    # predict log likelihood and flow
-    outputs = model.predict([image, atlas])
+    if args.mod==2:
+        accuracy_func=vxm.losses.Dice(with_logits=True)
+    else:
+        accuracy_func = vxm.losses.Dice(with_logits=False)
 
-    # remove unused batch dimension
-    ull_pred, mus, sigmas, flow = [array[0, ...] for array in outputs]
+    # prepare loss functions and compile model
+    for i, data in enumerate(base_generator):
+        hyper_val = random_hyperparam(args.hyper_num)
+        hyp = np.array([hyper_val for _ in range(args.batch_size)])
+        inputs, outputs, name = data
+        inputs = (*inputs, hyp)
 
-    # run through label groups and compute posteriors
-    posteriors = []
-    warped_atlas = []
-    total_labels = atlas_full.shape[-1]
-    for li, i in enumerate(range(0, total_labels, args.max_feats)):
-        slc = slice(i, min(i + args.max_feats, total_labels))
-        po, wa = funcs[li]([atlas_full[0, ..., slc], ull_pred, flow])
-        posteriors.append(po)
-        warped_atlas.append(wa)
-    posteriors = np.concatenate(posteriors, -1)
-    warped_atlas = np.concatenate(warped_atlas, -1)
+        _,_,_,predicted = model.predict(inputs)
+        predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
 
-    # compute final segmentation
-    # note: this requires about 0.5 seconds on the CPU. This can also be computed on the GPU
-    # as part of the funcs, (which would be very fast), but would require the full posterior
-    # estimation on the GPU in a single run. Some GPUs will have difficulty with this.
-    segmentation = posteriors.argmax(-1)
-
-# save segmentation
-vxm.py.utils.save_volfile(segmentation.astype('int32'), args.seg, affine)
-
-# save warped atlas
-if args.warped_atlas:
-    vxm.py.utils.save_volfile(warped_atlas, args.warped_atlas, affine)
-
-# save posteriors
-if args.posteriors:
-    normalized = posteriors / (1e-12 + np.sum(posteriors, -1, keepdims=True))
-    vxm.py.utils.save_volfile(normalized, args.posteriors, affine)
-
-# save warp
-if args.warp:
-    vxm.py.utils.save_volfile(flow, args.warp, affine)
-
-# save computed stats
-if args.stats:
-    np.savez_compressed(args.stats, means=mus, log_variances=sigmas)
+        accuracy = accuracy_func.loss(outputs[0], predicted.round())
+        accuracy_all.append(accuracy)
+        print(name[0], accuracy)
+        seg_result = predicted.round().squeeze()
+        if i%10==0:
+            print('%d-th mean accuracy: %f'% (i, np.array(accuracy_all).mean()))
+        vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii'%(name[0].split('.')[0], accuracy)))
+        vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
+    print(np.array(accuracy_all).mean())

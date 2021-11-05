@@ -67,6 +67,76 @@ def volgen(
 
         yield tuple(vols)
 
+def multivolgen_test(
+    path,
+    phase,
+    batch_size=1,
+    np_var='vol',
+    pad_shape=None,
+    resize_factor=(0.5,0.5,1),
+    add_feat_axis=True,
+    crop_size=[96,96,96]
+):
+    """
+    Base generator for random volume loading. Volumes can be passed as a path to
+    the parent directory, a glob pattern, a list of file paths, or a list of
+    preloaded volumes. Corresponding segmentations are additionally loaded if
+    `segs` is provided as a list (of file paths or preloaded segmentations) or set
+    to True. If `segs` is True, npz files with variable names 'vol' and 'seg' are
+    expected. Passing in preloaded volumes (with optional preloaded segmentations)
+    allows volumes preloaded in memory to be passed to a generator.
+
+    Parameters:
+        vol_names: Path, glob pattern, list of volume files to load, or list of
+            preloaded volumes.
+        batch_size: Batch size. Default is 1.
+        segs: Loads corresponding segmentations. Default is None.
+        np_var: Name of the volume variable if loading npz files. Default is 'vol'.
+        pad_shape: Zero-pads loaded volumes to a given shape. Default is None.
+        resize_factor: Volume resize factor. Default is 1.
+        add_feat_axis: Load volume arrays with added feature axis. Default is True.
+    """
+
+    # convert glob path to filenames
+    path_list=open(os.path.join(path, phase+'_pair_path_list.txt'), 'r').readlines()
+    t2w_filenames = [x.strip().split(' ')[0] for x in path_list]
+    adc_filenames = [x.strip().split(' ')[3] for x in path_list]
+    dwi_filenames = [x.strip().split(' ')[4] for x in path_list]
+    msk_filenames = [x.strip().split(' ')[1] for x in path_list]
+
+    if len(t2w_filenames) != len(msk_filenames):
+        raise ValueError('Number of image files must match number of seg files.')
+
+    while True:
+        # generate [batchsize] random image indices
+        indices = np.random.randint(len(t2w_filenames), size=batch_size)
+        vols=[]
+        names=[]
+        # load volumes and concatenate
+        load_params = dict(np_var=np_var, add_batch_axis=True, add_feat_axis=add_feat_axis,
+                           pad_shape=pad_shape, resize_factor=resize_factor, crop_size=crop_size)
+        for vol_names in [t2w_filenames, adc_filenames, dwi_filenames]:
+            imgs = [py.utils.load_volfile(vol_names[i], **load_params) for i in indices]
+            vols.append(np.concatenate(imgs, axis=0))
+        names.append([t2w_filenames[i].split('/')[-1] for i in indices])
+
+
+        # optionally load segmentations and concatenate
+            # assume inputs are npz files with 'seg' key
+        load_params['np_var'] = 'seg'  # be sure to load seg
+        s = [py.utils.load_volfile(msk_filenames[i], **load_params) for i in indices]
+        vols.append(np.concatenate(s, axis=0))
+        # import matplotlib.pyplot as plt
+        # plt.subplot(2,2,1)
+        # plt.imshow(s[0][0,:,:,47,0])
+        # plt.subplot(2,2,2)
+        # plt.imshow(vols[0][0,:,:,47,0])
+        # plt.subplot(2,2,3)
+        # plt.imshow(vols[1][0,:,:,47,0])
+        # plt.subplot(2,2,4)
+        # plt.imshow(vols[2][0,:,:,47,0])
+        # plt.show()
+        yield tuple(vols)
 
 def multivolgen(
     path,
@@ -112,12 +182,14 @@ def multivolgen(
         # generate [batchsize] random image indices
         indices = np.random.randint(len(t2w_filenames), size=batch_size)
         vols=[]
+        names=[]
         # load volumes and concatenate
         load_params = dict(np_var=np_var, add_batch_axis=True, add_feat_axis=add_feat_axis,
                            pad_shape=pad_shape, resize_factor=resize_factor, crop_size=crop_size)
         for vol_names in [t2w_filenames, adc_filenames, dwi_filenames]:
             imgs = [py.utils.load_volfile(vol_names[i], **load_params) for i in indices]
             vols.append(np.concatenate(imgs, axis=0))
+
 
         # optionally load segmentations and concatenate
 
@@ -176,7 +248,7 @@ def scan_to_scan(vol_names, bidir=False, batch_size=1, prob_same=0, no_warp=Fals
 
         yield (invols, outvols)
 
-def multi_mods_gen(vol_names,  batch_size=1,  **kwargs):
+def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
     """
     Generator for scan-to-scan registration.
 
@@ -189,10 +261,13 @@ def multi_mods_gen(vol_names,  batch_size=1,  **kwargs):
             Default if False.
         kwargs: Forwarded to the internal volgen generator.
     """
-    gen = multivolgen(vol_names, batch_size=batch_size, **kwargs)
+    gen = multivolgen(vol_names, batch_size=batch_size,  **kwargs)
 
     while True:
-        scan1, scan2, scan3, msk= next(gen)
+        if test:
+            scan1, scan2, scan3, msk, name = next(gen)
+        else:
+            scan1, scan2, scan3, msk= next(gen)
         invols = [scan1, scan2,  scan3]
         outvols =[msk, msk, msk, msk]
         #outvols = [msk]
