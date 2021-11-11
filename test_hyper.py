@@ -99,7 +99,7 @@ def random_hyperparam(hyper_num):
         #hyper_val = np.random.uniform(low=-20, high=20, size=(hyper_num,))
         #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
-        hyper_val =np.random.rand(hyper_num)
+        hyper_val =np.random.dirichlet(np.ones(3), size=1)[0]
     return hyper_val
 
 logdir = args.model_dir + "/logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -174,7 +174,7 @@ with tf.device(device):
 
         predicted = model.predict(inputs)
         #predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
-
+        print(predicted.max())
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
         accuracy_all.append(accuracy)
         print(name[0], accuracy)
