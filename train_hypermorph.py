@@ -76,7 +76,8 @@ parser.add_argument('--int-downsize', type=int, default=2,
                     help='flow downsample factor for integration (default: 2)')
 
 # loss hyperparameters
-parser.add_argument('--mod', type=int, default=None)
+parser.add_argument('--activation', type=str, default=None)
+parser.add_argument('--mod', type=int, required=True)
 parser.add_argument('--hyper_num', type=int, default=3)
 
 
@@ -115,7 +116,8 @@ def random_hyperparam(hyper_num):
         hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
         #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
-        hyper_val =np.random.rand(hyper_num)
+        hyper_val = np.random.dirichlet(np.ones(3), size=1)[0]
+        #hyper_val =np.random.uniform(low=0, high=1, size=(hyper_num,))
     return hyper_val
 
 def hyp_generator():
@@ -135,9 +137,11 @@ def hyp_generator_valid():
         inputs = (*inputs, hyp)
         yield (inputs, outputs)
 
-if args.mod >0:
+if args.mod ==0:
     # weighted 0
     # logic 1
+    args.activation = 'sigmoid'
+else:
     args.hyper_num+=1
 
 generator = hyp_generator()
@@ -199,7 +203,8 @@ with tf.device(device):
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
-        nb_hyp_params=args.hyper_num)
+        nb_hyp_params=args.hyper_num,
+        activation=args.activation)
 
     # model = vxm.networks.UnetDense(
     #     inshape=inshape,
