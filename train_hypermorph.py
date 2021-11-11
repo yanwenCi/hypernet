@@ -141,8 +141,10 @@ if args.mod ==0:
     # weighted 0
     # logic 1
     args.activation = 'sigmoid'
-else:
+    args.from_logits=False
+elif args.mod ==2:
     args.hyper_num+=1
+    args.from_logits=True
 
 generator = hyp_generator()
 generator_valid = hyp_generator_valid()
@@ -174,22 +176,26 @@ def test(model_test):
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs = data
-        #inputs = (*inputs, hyp)
+        inputs = (*inputs, hyp)
 
-        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[93].output)
+        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[98].output)
         feature1 = layer_model.predict(inputs)
-        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[94].output)
+        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[99].output)
         feature2 = layer_model.predict(inputs)
+        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[100].output)
+        feature3 = layer_model.predict(inputs)
         predicted = model_test.predict(inputs)
         predicted=tf.keras.activations.sigmoid(predicted)
         import matplotlib.pyplot as plt
-        plt.subplot(2,2,1)
+        plt.subplot(2,3,1)
         plt.imshow(feature1[0,:,:,48,0])
-        plt.subplot(2, 2, 2)
+        plt.subplot(2, 3, 2)
         plt.imshow(feature2[0, :, :, 48, 0])
-        plt.subplot(2, 2, 3)
+        plt.subplot(2, 3, 3)
+        plt.imshow(feature3[0,:,:,48,0])
+        plt.subplot(2,3,4)
         plt.imshow(outputs[0][0, :, :, 48, 0])
-        plt.subplot(2, 2, 4)
+        plt.subplot(2, 3, 5)
         plt.imshow(predicted[0, :, :, 48, 0])
         plt.show()
         #vxm.py.utils.save_volfile(predicted, 'example.nii')
@@ -224,9 +230,9 @@ with tf.device(device):
     #hyper_val=model.references.hyper_val
     if args.image_loss == 'dice':
         #image_loss_func = vxm.losses.HyperBinaryDiceLoss(hyper_val, args.mod).loss
-        image_loss1 = vxm.losses.HyperBinaryDiceLoss(0).loss
-        image_loss2 = vxm.losses.HyperBinaryDiceLoss(0).loss
-        image_loss3 = vxm.losses.HyperBinaryDiceLoss(0).loss
+        image_loss1 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='t2w')
+        image_loss2 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='adc')
+        image_loss3 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='dwi')
         image_loss_func = vxm.losses.HyperBinaryDiceLoss(args.mod).loss
         ce_loss = tf.keras.losses.BinaryCrossentropy(
             from_logits=True, label_smoothing=0, name='binary_crossentropy'
@@ -240,7 +246,7 @@ with tf.device(device):
     # prepare loss functions and compile model
 
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
-        #image_loss1, image_loss2, image_loss3,
+        image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
 
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch')

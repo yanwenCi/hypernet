@@ -77,6 +77,7 @@ parser.add_argument('--int-downsize', type=int, default=2,
 
 # loss hyperparameters
 parser.add_argument('--mod', type=int, default=None)
+parser.add_argument('--activation', type=str, default=None)
 parser.add_argument('--hyper_num', type=int, default=3)
 
 parser.add_argument('--image-loss', default='dice',
@@ -115,10 +116,12 @@ base_generator = vxm.generators.multi_mods_gen(
 hyperps = np.load('hyperp.npy')
 
 
-if args.mod > 0:
+if args.mod ==2 :
     # weighted 0
     # logic 1
     args.hyper_num += 1
+elif args.mod==0:
+    args.activation='sigmoid'
 
 # extract shape and number of features from sampled input
 sample_shape = next(base_generator)[0][0].shape
@@ -150,7 +153,8 @@ with tf.device(device):
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
-        nb_hyp_params=args.hyper_num)
+        nb_hyp_params=args.hyper_num,
+        activation=args.activation)
     print(model.summary())
     # load initial weights (if provided)
 
