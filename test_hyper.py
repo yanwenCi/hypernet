@@ -195,7 +195,7 @@ with tf.device(device):
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
         accuracy_all.append([accuracy, accuracy_t, accuracy_p])
-        print(name[0], accuracy, accuracy_t, accuracy_p)
+        print(name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
 
         if i%10==0:
             seg_result = predicted.round().squeeze()
