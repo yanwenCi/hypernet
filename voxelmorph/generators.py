@@ -103,6 +103,7 @@ def multivolgen_test(
     adc_filenames = [x.strip().split(' ')[3] for x in path_list]
     dwi_filenames = [x.strip().split(' ')[4] for x in path_list]
     msk_filenames = [x.strip().split(' ')[1] for x in path_list]
+    zon_filenames = [x.strip().split(' ')[2] for x in path_list]
 
     if len(t2w_filenames) != len(msk_filenames):
         raise ValueError('Number of image files must match number of seg files.')
@@ -126,6 +127,10 @@ def multivolgen_test(
             # assume inputs are npz files with 'seg' key
         load_params['np_var'] = 'seg'  # be sure to load seg
         s = [py.utils.load_volfile(msk_filenames[i], **load_params) for i in indices]
+        vols.append(np.concatenate(s, axis=0))
+
+        load_params['np_var'] = 'seg'  # be sure to load seg
+        s = [py.utils.load_volfile(zon_filenames[i], **load_params) for i in indices]
         vols.append(np.concatenate(s, axis=0))
         # import matplotlib.pyplot as plt
         # plt.subplot(2,2,1)
@@ -269,15 +274,15 @@ def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
 
     while True:
         if test:
-            scan1, scan2, scan3, msk, name = next(gen)
+            scan1, scan2, scan3, msk, zone, name = next(gen)
+            invols = [scan1, scan2, scan3]
+            outvols = [msk, msk, msk, msk]
+            yield (invols, outvols, zone, name)
         else:
             scan1, scan2, scan3, msk= next(gen)
-        invols = [scan1, scan2,  scan3]
-        outvols =[msk, msk, msk, msk]
-        #outvols = [msk]
-        if test:
-            yield (invols, outvols, name)
-        else:
+            invols = [scan1, scan2,  scan3]
+            outvols =[msk, msk, msk, msk]
+            #outvols = [msk]
             yield (invols, outvols)
 
 def scan_to_atlas(vol_names, atlas, bidir=False, batch_size=1, no_warp=False, segs=None, **kwargs):

@@ -178,13 +178,13 @@ def test(model_test):
         inputs, outputs = data
         inputs = (*inputs, hyp)
 
-        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[98].output)
-        feature1 = layer_model.predict(inputs)
-        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[99].output)
-        feature2 = layer_model.predict(inputs)
-        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[100].output)
-        feature3 = layer_model.predict(inputs)
-        predicted = model_test.predict(inputs)
+        # layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[98].output)
+        # feature1 = layer_model.predict(inputs)
+        # layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[99].output)
+        # feature2 = layer_model.predict(inputs)
+        # layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[100].output)
+        # feature3 = layer_model.predict(inputs)
+        feature1, feature2, feature3,predicted = model_test.predict(inputs)
         predicted=tf.keras.activations.sigmoid(predicted)
         import matplotlib.pyplot as plt
         plt.subplot(2,3,1)

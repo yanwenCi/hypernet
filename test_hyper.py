@@ -173,18 +173,33 @@ with tf.device(device):
     for i, data in enumerate(base_generator):
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
-        inputs, outputs, name = data
+        inputs, outputs, zone, name = data
         inputs = (*inputs, hyp)
 
-        predicted = model.predict(inputs)
+        _,_,_,predicted = model.predict(inputs)
         #predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
-        print(predicted.max())
+        #print(predicted.max())
+        p_zone=np.zeros_like(outputs[0])
+        p_zone[zone==1]=1
+        t_zone=np.zeros_like(outputs[0])
+        t_zone[zone==2]=2
+        # import matplotlib.pyplot as plt
+        # plt.imshow(p_zone[0,:,:,46,0])
+        # plt.show()
+        p_lesion=outputs[0]*p_zone
+        t_lesion=outputs[0]*t_zone
+        p_predict=predicted.round()*p_zone
+        t_predict=predicted.round()*t_zone
+
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
-        accuracy_all.append(accuracy)
-        print(name[0], accuracy)
-        seg_result = predicted.round().squeeze()
+        accuracy_p = accuracy_func.loss(p_lesion, p_predict)
+        accuracy_t = accuracy_func.loss(t_lesion, t_predict)
+        accuracy_all.append([accuracy, accuracy_t, accuracy_p])
+        print(name[0], accuracy, accuracy_t, accuracy_p)
+
         if i%10==0:
+            seg_result = predicted.round().squeeze()
             print('%d-th mean accuracy: %f'% (i, np.array(accuracy_all).mean()))
         vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii'%(name[0].split('.')[0], accuracy)))
         vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
-    print(np.array(accuracy_all).mean())
+    print(np.array(accuracy_all).mean(axis=0))
