@@ -182,7 +182,7 @@ with tf.device(device):
         p_zone=np.zeros_like(outputs[0])
         p_zone[zone==1]=1
         t_zone=np.zeros_like(outputs[0])
-        t_zone[zone==2]=2
+        t_zone[zone==2]=1
         # import matplotlib.pyplot as plt
         # plt.imshow(p_zone[0,:,:,46,0])
         # plt.show()
@@ -199,7 +199,7 @@ with tf.device(device):
 
         if i%10==0:
             seg_result = predicted.round().squeeze()
-            print('%d-th mean accuracy: %f'% (i, np.array(accuracy_all).mean()))
+            #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
         vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii'%(name[0].split('.')[0], accuracy)))
         vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
     print(np.array(accuracy_all).mean(axis=0))
