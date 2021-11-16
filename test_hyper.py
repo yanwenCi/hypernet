@@ -86,6 +86,7 @@ parser.add_argument('--image-sigma', type=float, default=0.05,
                     help='estimated image noise for mse image scaling (default: 0.05)')
 parser.add_argument('--oversample-rate', type=float, default=1,
                     help='hyperparameter end-point over-sample rate (default 0.2)')
+parser.add_argument('--hyper_val', type=str, default=None)
 args = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -93,14 +94,16 @@ gpu_avilable = tf.config.experimental.list_physical_devices('GPU')
 print(gpu_avilable)
 
 def random_hyperparam(hyper_num):
-
-    if args.mod == 2:
-        #hyper_val = hyperps[60]
-        hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
-        #hyper_val = np.random.uniform(low=-20, high=20, size=(hyper_num,))
-        #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
+    if args.hyper_val is not None:
+        hyper_val = np.array([float(i) for i in args.hyper_val.split(',')])
     else:
-        hyper_val =np.random.dirichlet(np.ones(3), size=1)[0]
+        if args.mod == 2:
+            #hyper_val = hyperps[60]
+            hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
+            #hyper_val = np.random.uniform(low=-20, high=20, size=(hyper_num,))
+            #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
+        else:
+            hyper_val =np.random.dirichlet(np.ones(3), size=1)[0]
     return hyper_val
 
 logdir = args.model_dir + "/logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -168,14 +171,14 @@ with tf.device(device):
         accuracy_func=vxm.losses.Dice(with_logits=False)
     else:
         accuracy_func = vxm.losses.Dice(with_logits=False)
-
+    number_t,number_p=0,0
+    number=[]
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs, zone, name = data
         inputs = (*inputs, hyp)
-
         _,_,_,predicted = model.predict(inputs)
         #predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
         #print(predicted.max())
@@ -188,9 +191,12 @@ with tf.device(device):
         # plt.show()
         p_lesion=outputs[0]*p_zone
         t_lesion=outputs[0]*t_zone
+        if np.sum(p_lesion)<1:
+            number_p+=1
+        if np.sum(t_lesion)<1:
+            number_t+=1
         p_predict=predicted.round()*p_zone
         t_predict=predicted.round()*t_zone
-
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
@@ -202,4 +208,5 @@ with tf.device(device):
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
         vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii'%(name[0].split('.')[0], accuracy)))
         vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
-    print(np.array(accuracy_all).mean(axis=0))
+    sum_accu=np.array(accuracy_all).sum(axis=0)
+    print(sum_accu[0]/len(accuracy_all), sum_accu[1]/(len(accuracy_all)-number_t), sum_accu[2]/(len(accuracy_all)-number_p))
