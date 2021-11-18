@@ -1,0 +1,14 @@
+#!/bin/bash
+ python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val 0.2,0,0.8   --pred-dir Pred_dir/results_208 >checkpoints/linear_sum_wo1/test_208
+ python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val 0.4,0,0.6  --pred-dir Pred_dir/results_406 >checkpoints/linear_sum_wo1/test_406
+ python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val 0.6,0,0.4  --pred-dir Pred_dir/results_604  >checkpoints/linear_sum_wo1/test_604
+ python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val 0.8,0,0.2  --pred-dir Pred_dir/results_802  >checkpoints/linear_sum_wo1/test_802
+ python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val 0.2,0.2,0.6  --pred-dir Pred_dir/results_226  >checkpoints/linear_sum_wo1/test_226
+ python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val 0.2,0.4,0.4   --pred-dir Pred_dir/results_244 >checkpoints/linear_sum_wo1/test_244
+ python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val 0.4,0.2,0.4  --pred-dir Pred_dir/results_424 >checkpoints/linear_sum_wo1/test_424 
+ python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val 0.6,0.2,0.2  --pred-dir Pred_dir/results_622 >checkpoints/linear_sum_wo1/test_622
+python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val  0.2,0.6,0.2  --pred-dir Pred_dir/results_262 >checkpoints/linear_sum_wo1/test_262 
+python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val  0.4,0.2,0.4  --pred-dir Pred_dir/results_424  >checkpoints/linear_sum_wo1/test_442 
+python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val  0.8,0.2,0  --pred-dir Pred_dir/results_820  >checkpoints/linear_sum_wo1/test_820
+python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val  0,0.4,0.6  --pred-dir Pred_dir/results_046 >checkpoints/linear_sum_wo1/test_046
+python test_hyper.py --img-list data/data_lesion/ --model-dir checkpoints/linear_sum_wo1/  --mod 0 --load-weights 47 --gpu 2 --hyper_val  0.6,0.4,0  --pred-dir Pred_dir/results_640 >checkpoints/linear_sum_wo1/test_640

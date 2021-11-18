@@ -113,11 +113,12 @@ def random_hyperparam(hyper_num):
 
     if args.mod == 2:
         #hyper_val = hyperps[50]
-        hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
+        hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
+        #hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
         #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
-        hyper_val = np.random.dirichlet(np.ones(3), size=1)[0]
-        #hyper_val =np.random.uniform(low=0, high=1, size=(hyper_num,))
+        #hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
+        hyper_val =np.random.uniform(low=0, high=1, size=(hyper_num,))
     return hyper_val
 
 def hyp_generator():
@@ -142,6 +143,8 @@ if args.mod ==0:
     # logic 1
     args.activation = 'sigmoid'
     args.from_logits=False
+elif args.mod==1:
+    args.from_logits=True
 elif args.mod ==2:
     args.hyper_num+=1
     args.from_logits=True

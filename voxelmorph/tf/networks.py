@@ -1579,7 +1579,8 @@ class HyperUnetDense(ne.modelio.LoadableModel):
         #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
         weight_sum_layer = weight_sum(dim=ndims)
         #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
-        outputs = weight_sum_layer(outputs,hyp_input[0,...])
+        hyp=tf.nn.softmax(hyp_input[0,...])
+        outputs = weight_sum_layer(outputs,hyp)#hyp_input[0,...])
         if activation is None:
             outputs = tf.keras.activations.sigmoid(outputs)
 
