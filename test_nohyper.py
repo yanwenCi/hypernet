@@ -108,17 +108,20 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
 # scan-to-scan generator
-base_generator = vxm.generators.multi_mods_gen(
+base_generator = vxm.generators.multi_mods_gen_test(
     args.img_list, phase='test', batch_size=args.batch_size, test= True, add_feat_axis=add_feat_axis)
 # random hyperparameter generator
 
 hyperps = np.load('hyperp.npy')
 
 
-if args.mod > 0:
+if args.mod ==0:
     # weighted 0
     # logic 1
-    args.hyper_num += 1
+    args.activ='sigmoid'
+elif args.mod==2:
+    args.hyper_num+=1
+    args.activ=None
 
 # extract shape and number of features from sampled input
 sample_shape = next(base_generator)[0][0].shape
@@ -149,7 +152,8 @@ with tf.device(device):
         nb_unet_features=[enc_nf, dec_nf],
         src_feats=nfeats,
         trg_feats=nfeats,
-        unet_half_res=False)
+        unet_half_res=False,
+        activate=args.activ)
     print(model.summary())
     # load initial weights (if provided)
 
@@ -162,7 +166,7 @@ with tf.device(device):
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
 
-        inputs, outputs, name = data
+        inputs, outputs, zone, name = data
 
         predicted = model.predict(inputs)
         #predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())

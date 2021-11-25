@@ -91,7 +91,7 @@ args = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 gpu_avilable = tf.config.experimental.list_physical_devices('GPU')
-print(gpu_avilable)
+#print(gpu_avilable)
 
 def random_hyperparam(hyper_num):
     if args.hyper_val is not None:
@@ -158,11 +158,11 @@ with tf.device(device):
         unet_half_res=False,
         nb_hyp_params=args.hyper_num,
         activation=args.activation)
-    print(model.summary())
+    #print(model.summary())
     # load initial weights (if provided)
 
     model.load_weights(os.path.join(model_dir, '{:04d}.h5'.format(int(args.load_weights))))
-    print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
+    #print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
 
     # prepare image loss
     hyper_val = model.references.hyper_val
@@ -191,22 +191,24 @@ with tf.device(device):
         # plt.show()
         p_lesion=outputs[0]*p_zone
         t_lesion=outputs[0]*t_zone
-        if np.sum(p_lesion)<1:
+        if np.sum(p_lesion)<3:
             number_p+=1
-        if np.sum(t_lesion)<1:
+            #print('    %s p zone has no lesion' % name[0])
+        if np.sum(t_lesion)<3:
             number_t+=1
+            #print('    %s t zone has no lesion' % name[0])
         p_predict=predicted.round()*p_zone
         t_predict=predicted.round()*t_zone
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
         accuracy_all.append([accuracy, accuracy_t, accuracy_p])
-        print(name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
+        #print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
 
         if i%10==0:
             seg_result = predicted.round().squeeze()
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
-        vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii'%(name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
+            vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii'%(name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
     sum_accu=np.array(accuracy_all).sum(axis=0)
     print(sum_accu[0]/len(accuracy_all), sum_accu[1]/(len(accuracy_all)-number_t), sum_accu[2]/(len(accuracy_all)-number_p))

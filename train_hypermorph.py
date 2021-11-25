@@ -117,8 +117,8 @@ def random_hyperparam(hyper_num):
         #hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
         #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
-        #hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
-        hyper_val =np.random.uniform(low=0, high=1, size=(hyper_num,))
+        hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
+        #hyper_val =np.random.uniform(low=-10, high=10, size=(hyper_num,))
     return hyper_val
 
 def hyp_generator():
@@ -139,14 +139,20 @@ def hyp_generator_valid():
         yield (inputs, outputs)
 
 if args.mod ==0:
-    # weighted 0
-    # logic 1
+    # weighted wo bias 0
     args.activation = 'sigmoid'
     args.from_logits=False
 elif args.mod==1:
-    args.from_logits=True
-elif args.mod ==2:
+    #weighted w bias 
+    args.from_logits=False
     args.hyper_num+=1
+    args.activation = 'sigmoid'
+elif args.mod ==2:
+    #weighted logistic w bias
+    args.hyper_num+=1
+    args.from_logits=True
+elif args.mod==3:
+    #logistic wo bias
     args.from_logits=True
 
 generator = hyp_generator()

@@ -1361,6 +1361,7 @@ class UnetDense(ne.modelio.LoadableModel):
                  src_feats=1,
                  trg_feats=1,
                  unet_half_res=False,
+                 activate=None,
                  name='hyper'):
         """
         Parameters:
@@ -1418,37 +1419,11 @@ class UnetDense(ne.modelio.LoadableModel):
             output_nc=trg_feats
         )
             output_list.append(unet_model1.output)
-        # unet_model2 = Unet(
-        #    input_model=input_model2,
-        #    nb_features=nb_unet_features,
-        #    nb_levels=nb_unet_levels,
-        #    feat_mult=unet_feat_mult,
-        #    nb_conv_per_level=nb_unet_conv_per_level,
-        #    half_res=unet_half_res,
-        #     hyp_input=None,
-        #     hyp_tensor=None,
-        #    final_activation_function='sigmoid',
-        #    name='%s_unet2' % name,
-        #     output_nc=trg_feats
-        # )
-        # unet_model3 = Unet(
-        #    input_model=input_model3,
-        #    nb_features=nb_unet_features,
-        #    nb_levels=nb_unet_levels,
-        #    feat_mult=unet_feat_mult,
-        #    nb_conv_per_level=nb_unet_conv_per_level,
-        #    half_res=unet_half_res,
-        #     hyp_input=None,
-        #     hyp_tensor=None,
-        #    final_activation_function='sigmoid',
-        #    name='%s_unet3' % name,
-        #     output_nc=trg_feats
-        # )
 
 
         outputs = tf.concat(output_list, -1)
         #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
-        weight_sum_layer = tf.keras.layers.Conv3D(filters=1, kernel_size=(1,1,1), activation='sigmoid', name='final_concat')
+        weight_sum_layer = tf.keras.layers.Conv3D(filters=1, kernel_size=(1,1,1), activation=activate, name='final_concat')
         
         #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
         outputs = weight_sum_layer(outputs)
@@ -1579,8 +1554,9 @@ class HyperUnetDense(ne.modelio.LoadableModel):
         #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
         weight_sum_layer = weight_sum(dim=ndims)
         #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
-        hyp=tf.nn.softmax(hyp_input[0,...])
-        outputs = weight_sum_layer(outputs,hyp)#hyp_input[0,...])
+        #hyp=hyp_input[0,...]/tf.reduce_sum(hyp_input[0,...])
+        #hyp=tf.nn.softmax(hyp_input[0,...])
+        outputs = weight_sum_layer(outputs,hyp_input[0,...])#hyp_input[0,...])
         if activation is None:
             outputs = tf.keras.activations.sigmoid(outputs)
 

@@ -135,10 +135,6 @@ def hyp_generator_valid():
         inputs = (*inputs, hyp)
         yield (inputs, outputs)
 
-if args.mod >0:
-    # weighted 0
-    # logic 1
-    args.hyper_num+=1
 
 generator = hyp_generator()
 generator_valid = hyp_generator_valid()
@@ -189,6 +185,10 @@ def test(model_test):
         plt.imshow(predicted[0, :, :, 48, 0])
         plt.show()
         #vxm.py.utils.save_volfile(predicted, 'example.nii')
+if args.mod==0:
+    args.activ='sigmoid'
+elif args.mod==2:
+    args.activ=None
 
 with tf.device(device):
 
@@ -206,7 +206,8 @@ with tf.device(device):
         nb_unet_features=[enc_nf, dec_nf],
         src_feats=nfeats,
         trg_feats=nfeats,
-        unet_half_res=False)
+        unet_half_res=False,
+        activate=args.activ)
 
     print(model.summary())
     #load initial weights (if provided)
@@ -235,7 +236,7 @@ with tf.device(device):
     # prepare loss functions and compile model
 
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
-        #image_loss1, image_loss2, image_loss3,
+        image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
 
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch')
