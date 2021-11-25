@@ -162,21 +162,46 @@ with tf.device(device):
 
     # prepare image loss
     accuracy_func=vxm.losses.Dice(with_logits=False)
-
+    number_p, number_t=0,0
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
 
         inputs, outputs, zone, name = data
 
-        predicted = model.predict(inputs)
-        #predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
-
+        _, _, _, predicted = model.predict(inputs)
+        # predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
+        # print(predicted.max())
+        p_zone = np.zeros_like(outputs[0])
+        p_zone[zone == 1] = 1
+        t_zone = np.zeros_like(outputs[0])
+        t_zone[zone == 2] = 1
+        # import matplotlib.pyplot as plt
+        # plt.imshow(p_zone[0,:,:,46,0])
+        # plt.show()
+        p_lesion = outputs[0] * p_zone
+        t_lesion = outputs[0] * t_zone
+        if np.sum(p_lesion) < 3:
+            number_p += 1
+            # print('    %s p zone has no lesion' % name[0])
+        if np.sum(t_lesion) < 3:
+            number_t += 1
+            # print('    %s t zone has no lesion' % name[0])
+        p_predict = predicted.round() * p_zone
+        t_predict = predicted.round() * t_zone
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
-        accuracy_all.append(accuracy)
-        print(name[0], accuracy)
-        seg_result = predicted.round().squeeze()
-        if i%10==0:
-            print('%d-th mean accuracy: %f'% (i, np.array(accuracy_all).mean()))
-        vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii'%(name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
-    print(np.array(accuracy_all).mean())
+        accuracy_p = accuracy_func.loss(p_lesion, p_predict)
+        accuracy_t = accuracy_func.loss(t_lesion, t_predict)
+        accuracy_all.append([accuracy, accuracy_t, accuracy_p])
+        # print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
+
+        if i % 10 == 0:
+            seg_result = predicted.round().squeeze()
+            # print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
+            vxm.py.utils.save_volfile(seg_result,
+                                      os.path.join(save_file, '%s_dice_%.4f.nii' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(outputs[0].squeeze(),
+                                      os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
+    sum_accu = np.array(accuracy_all).sum(axis=0)
+    print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),
+          sum_accu[2] / (len(accuracy_all) - number_p))
+
