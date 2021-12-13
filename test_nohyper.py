@@ -108,7 +108,7 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
 # scan-to-scan generator
-base_generator = vxm.generators.multi_mods_gen_test(
+base_generator = vxm.generators.multi_mods_gen(
     args.img_list, phase='test', batch_size=args.batch_size, test= True, add_feat_axis=add_feat_axis)
 # random hyperparameter generator
 
@@ -168,7 +168,7 @@ with tf.device(device):
 
         inputs, outputs, zone, name = data
 
-        _, _, _, predicted = model.predict(inputs)
+        predicted = model.predict(inputs)
         # predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
         # print(predicted.max())
         p_zone = np.zeros_like(outputs[0])
@@ -192,15 +192,18 @@ with tf.device(device):
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
         accuracy_all.append([accuracy, accuracy_t, accuracy_p])
-        # print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
+        print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
 
-        if i % 10 == 0:
-            seg_result = predicted.round().squeeze()
+        #if i % 10 == 0:
+        seg_result = predicted.squeeze()
             # print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
-            vxm.py.utils.save_volfile(seg_result,
-                                      os.path.join(save_file, '%s_dice_%.4f.nii' % (name[0].split('.')[0], accuracy)))
-            vxm.py.utils.save_volfile(outputs[0].squeeze(),
-                                      os.path.join(save_file, name[0].replace('.nii', 'label.nii')))
+        vxm.py.utils.save_volfile(seg_result,
+                                      os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))
+        vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_t2w.nii.gz' % (name[0].split('.')[0], accuracy)))
+        vxm.py.utils.save_volfile(inputs[1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy)))
+        vxm.py.utils.save_volfile(inputs[2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
+        vxm.py.utils.save_volfile(outputs[0].squeeze(),
+                                      os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))
     sum_accu = np.array(accuracy_all).sum(axis=0)
     print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),
           sum_accu[2] / (len(accuracy_all) - number_p))
