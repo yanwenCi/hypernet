@@ -1524,41 +1524,24 @@ class HyperUnetDense(ne.modelio.LoadableModel):
             output_nc=trg_feats
         )
             output_list.append(unet_model1.output)
-#        unet_model2 = Unet(
-#            input_model=input_model2,
-#            nb_features=nb_unet_features,
-#            nb_levels=nb_unet_levels,
-#            feat_mult=unet_feat_mult,
-#            nb_conv_per_level=nb_unet_conv_per_level,
-#            half_res=unet_half_res,
-#            hyp_input=hyp_input,
-#            hyp_tensor=hyp_last,
-#            final_activation_function='sigmoid',
-#            name='%s_unet2' % name
-#        )
-#        unet_model3 = Unet(
-#            input_model=input_model3,
-#            nb_features=nb_unet_features,
-#            nb_levels=nb_unet_levels,
-#            feat_mult=unet_feat_mult,
-#            nb_conv_per_level=nb_unet_conv_per_level,
-#            half_res=unet_half_res,
-#            hyp_input=hyp_input,
-#            hyp_tensor=hyp_last,
-#            final_activation_function='sigmoid',
-#            name='%s_unet3' % name
-#        )
 
 
-        outputs = tf.concat(output_list, -1)
+        outputs = tf.nn.softmax(tf.concat(output_list, -1),-1)
         #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
         weight_sum_layer = weight_sum(dim=ndims)
         #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
         #hyp=hyp_input[0,...]/tf.reduce_sum(hyp_input[0,...])
         #hyp=tf.nn.softmax(hyp_input[0,...])
-        outputs = weight_sum_layer(outputs,hyp_input[0,...])#hyp_input[0,...])
+
+
         if activation is None:
+            outputs = tf.nn.softmax(tf.concat(output_list, -1), -1)
+            outputs = weight_sum_layer(outputs,hyp_input[0,...])#hyp_input[0,...])
             outputs = tf.keras.activations.sigmoid(outputs)
+        else:
+            outputs = tf.concat(output_list, -1)
+            outputs = weight_sum_layer(outputs, hyp_input[0, ...])  # hyp_input[0,...])
+
 
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
 
