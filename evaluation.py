@@ -16,7 +16,7 @@ def main(args):
     number_of_od = []
     number_of_pg = []
     number_of_pred = []
-    od_tp,pred_acc, od_fp, gt_tp, pd_tp=0,0,0,0,0
+    gt_acc_lesion,od_tp,pred_acc, od_fp, gt_tp, pd_tp=0,0,0,0,0,0
 
     #path='/data0/yw/jupyter_folder/Attention-Gated-Network/experiment_unet_3mod80'
 
@@ -34,17 +34,18 @@ def main(args):
             # dwi = nib.load(path_dwi).get_fdata()
             lab = nib.load(path_lab).get_fdata()
             pre = nib.load(path_pre).get_fdata()
-            hausd_dist, dice_vals, precision, recal,number_lesion_gt, number_lesion_pd, od_acc_tp, od_acc_fp, gt_number, pred_number=metrics(pre, lab)
+            hausd_dist, dice_vals, precision, recal,number_tplesion_gt, number_tplesion_pd, od_acc_tp, od_acc_fp, gt_number, pred_number=metrics(pre, lab)
             dice_mean.append([path_pre.split('/')[-1]]+hausd_dist.tolist() + dice_vals.tolist() + precision.tolist() + recal.tolist())
-            number_of_pg.append([path_pre.split('/')[-1]]+number_lesion_gt.tolist() + number_lesion_pd.tolist())
+            number_of_pg.append([path_pre.split('/')[-1]]+number_tplesion_gt.tolist() + number_tplesion_pd.tolist())
             number_of_od.append([path_pre.split('/')[-1]]+od_acc_tp.tolist()+ od_acc_fp.tolist())
             number_of_pred.append([path_pre.split('/')[-1]]+pred_number.tolist()+[gt_number])
             od_tp+=od_acc_tp
             od_fp+=od_acc_fp
             pred_acc+=pred_number
-            
-            gt_tp+=number_lesion_gt
-            pd_tp+=number_lesion_pd
+            gt_acc_lesion+=gt_number
+
+            gt_tp+=number_tplesion_gt
+            pd_tp+=number_tplesion_pd
     save_path=join(path, 'metrics')
     print(od_tp, od_fp, pred_acc)
     if not os.path.exists(save_path):
@@ -66,9 +67,9 @@ def main(args):
 
     f_csv.close()
     print(np.mean(np.array(dice_mean)[:,1:].astype(np.float),axis=0))
-    print('od', od_tp / (od_tp + od_fp), od_tp / 364)
+    print('od', od_tp / (od_tp + od_fp), od_tp / gt_acc_lesion)
     #print(od_tp, od_fp)
-    print('gtpd', gt_tp/384, pd_tp/pred_acc)
+    print('gtpd', gt_tp/gt_acc_lesion, pd_tp/pred_acc)
 
 def removesamll(contours, thres=0.5):
     n = len(contours)
@@ -113,14 +114,14 @@ def metrics(pred, target):
         recal[p-1]=rec[-1]
 
         #calculate object detection metric
-        od_iou, tot_tgt, tot_pred, tp_num, fp_num=OD_PR(target, pred_seg, 0.25)
-        od_acc_tp[p-1]+=tp_num
-        od_acc_fp[p-1]+=fp_num
+        od_iou, number_lesion_tgt, number_lesion__pred, tp_num, fp_num=OD_PR(target, pred_seg, 0.25)
+        od_acc_tp[p-1]=tp_num
+        od_acc_fp[p-1]=fp_num
         thre=[0.25]
-        pn_pd, number_tp_pd[p-1], pred_lesion[p-1]=pn_rate(target,  pred_seg, thre,direct='pred')
-        pn_gt, number_tp_gt[p-1], gt_lesion[p-1]=pn_rate(target,  pred_seg,thre, direct='gt')
+        overlap_pd, number_tp_pd[p-1], pred_lesion[p-1]=pn_rate(target,  pred_seg, thre,direct='pred')
+        overlap_gt, number_tp_gt[p-1], gt_lesion[p-1]=pn_rate(target,  pred_seg,thre, direct='gt')
 
-    return hausd_dist, dice_vals, precision, recal,number_tp_gt, number_tp_pd, od_acc_tp, od_acc_fp, tot_tgt, pred_lesion
+    return hausd_dist, dice_vals, precision, recal,number_tp_gt, number_tp_pd, od_acc_tp, od_acc_fp, number_lesion_tgt, pred_lesion
 
 
 if __name__=='__main__':
