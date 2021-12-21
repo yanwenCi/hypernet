@@ -112,10 +112,10 @@ def random_hyperparam(hyper_num):
 
     if args.mod == 2:
         #hyper_val = hyperps[50]
-        hyper_val = np.random.uniform(low=-2, high=2, size=(hyper_num,))
+        hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
         #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
-        hyper_val =np.random.rand(hyper_num)
+        hyper_val =np.random.dirichlet(np.ones(hyper_num), size=1)[0]
     return hyper_val
 
 def hyp_generator():
