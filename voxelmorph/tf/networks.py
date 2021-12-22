@@ -1362,7 +1362,7 @@ class UnetDense(ne.modelio.LoadableModel):
                  trg_feats=1,
                  unet_half_res=False,
                  activate=None,
-                 nb_hyp_params=3,
+                 nb_hyp_params=None,
                  name='hyper'):
         """
         Parameters:

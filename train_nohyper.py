@@ -140,7 +140,7 @@ if args.mod==0:
 elif args.mod==2:
     args.hyper_num+=1
     args.activ=None
-    
+
 generator = hyp_generator()
 generator_valid = hyp_generator_valid()
 validation_steps=100
@@ -210,7 +210,8 @@ with tf.device(device):
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
-        activate=args.activ)
+        activate=args.activ,
+        nb_hyp_params=args.hyper_num)
 
     print(model.summary())
     #load initial weights (if provided)
