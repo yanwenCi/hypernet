@@ -10,6 +10,8 @@ from metrics import precision_and_recall, DiceMetric, dice_score, pn_rate, OD_PR
 import surface_distance as sd
 import csv
 import copy
+import voxelmorph as vxm
+
 def main(args):
     path=args.sou_path
     dice_mean = []
@@ -98,14 +100,14 @@ def metrics(pred, target):
     number_tp_gt=np.zeros(9)
     pred_lesion=np.zeros(9)
     gt_lesion=np.zeros(9)
-
+    dice_score=vxm.losses.Dice(with_logits=False)
     for p in range(1,10):
         pred_seg=copy.deepcopy(pred)
         thre=p/10
         pred_seg[pred_seg>thre]=1
         pred_seg[pred_seg<=thre]=0
 
-        dice_vals[p-1]=dice_score(pred_seg, target,2)[-1]
+        dice_vals[p-1]=dice_score(pred_seg, target)
         surf_dist=sd.compute_surface_distances(np.array(pred_seg, dtype=bool), np.array(target, dtype=bool), (1,1,1))
         hausd_dist[p-1]=sd.compute_robust_hausdorff(surf_dist,95)
         hausd_dist[np.isinf(hausd_dist)]=50
