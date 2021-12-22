@@ -243,12 +243,12 @@ with tf.device(device):
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
     )
-    training_history = model.fit(base_generator,initial_epoch=args.initial_epoch,
+    training_history = model.fit(hyp_generator,initial_epoch=args.initial_epoch,
                         epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
                         callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
                         validation_steps=validation_steps,
-                        validation_data=base_generator_valid)
+                        validation_data=hyp_generator_valid)
 
     # save final weights
     model.save(save_filename.format(epoch=args.epochs))
