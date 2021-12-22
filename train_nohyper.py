@@ -135,7 +135,12 @@ def hyp_generator_valid():
         inputs = (*inputs, hyp)
         yield (inputs, outputs)
 
-
+if args.mod==0:
+    args.activ='sigmoid'
+elif args.mod==2:
+    args.hyper_num+=1
+    args.activ=None
+    
 generator = hyp_generator()
 generator_valid = hyp_generator_valid()
 validation_steps=100
@@ -185,10 +190,8 @@ def test(model_test):
         plt.imshow(predicted[0, :, :, 48, 0])
         plt.show()
         #vxm.py.utils.save_volfile(predicted, 'example.nii')
-if args.mod==0:
-    args.activ='sigmoid'
-elif args.mod==2:
-    args.activ=None
+
+
 
 with tf.device(device):
 

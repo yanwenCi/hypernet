@@ -68,7 +68,7 @@ def main(args):
     f_csv.close()
     print(np.mean(np.array(dice_mean)[:,1:].astype(np.float),axis=0))
     print('od', od_tp / (od_tp + od_fp), od_tp / gt_acc_lesion)
-    #print(od_tp, od_fp)
+    print(gt_acc_lesion)
     print('gtpd', gt_tp/gt_acc_lesion, pd_tp/pred_acc)
 
 def removesamll(contours, thres=0.5):
