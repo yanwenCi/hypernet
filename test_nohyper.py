@@ -165,10 +165,11 @@ with tf.device(device):
     number_p, number_t=0,0
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
-
+        hyper_val = random_hyperparam(args.hyper_num)
+        hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs, zone, name = data
-
-        predicted = model.predict(inputs)
+        inputs = (*inputs, hyp)
+        predicted = model.predict(inputs)[-1]
         # predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
         # print(predicted.max())
         p_zone = np.zeros_like(outputs[0])

@@ -1362,6 +1362,7 @@ class UnetDense(ne.modelio.LoadableModel):
                  trg_feats=1,
                  unet_half_res=False,
                  activate=None,
+                 nb_hyp_params=None,
                  name='hyper'):
         """
         Parameters:
@@ -1402,6 +1403,7 @@ class UnetDense(ne.modelio.LoadableModel):
         input_model2 = tf.keras.Model(inputs=[source2], outputs=[source2])
         input_model3 = tf.keras.Model(inputs=[source3], outputs=[source3])
         # build hypernetwork
+        hyp_input = tf.keras.Input(shape=[nb_hyp_params], name='%s_hyp_input' % name)
 
         # build core unet model and grab inputs
         for i, input_model in enumerate((input_model1, input_model2, input_model3)):
@@ -1414,7 +1416,7 @@ class UnetDense(ne.modelio.LoadableModel):
             half_res=unet_half_res,
             hyp_input=None,
             hyp_tensor=None,
-            final_activation_function=None,
+            final_activation_function=activate,
             name='%s_unet%d' % (name,i),
             output_nc=trg_feats
         )
@@ -1423,16 +1425,19 @@ class UnetDense(ne.modelio.LoadableModel):
 
         outputs = tf.concat(output_list, -1)
         #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
-        weight_sum_layer = tf.keras.layers.Conv3D(filters=1, kernel_size=(1,1,1), activation=activate, name='final_concat')
-        
-        #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
-        outputs = weight_sum_layer(outputs)
-
+        if hyp_input is None:
+            weight_sum_layer = tf.keras.layers.Conv3D(filters=1, kernel_size=(1,1,1), activation=activate, name='final_concat')
+            outputs = weight_sum_layer(outputs)
+        else:
+            weight_sum_layer = weight_sum(dim=ndims)
+            outputs = weight_sum_layer(outputs, hyp_input)  # hyp_input[0,...])
+        if activate is None:
+            outputs = tf.keras.activations.sigmoid(outputs)
 
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
 
-        super().__init__(name=name, inputs=[source1, source2, source3], outputs=[
-          #output_list[0],output_list[1], output_list[2],
+        super().__init__(name=name, inputs=[source1, source2, source3, hyp_input], outputs=[
+          output_list[0],output_list[1], output_list[2],
                                                                                             outputs])
 
         # cache pointers to layers and tensors for future reference
@@ -1519,7 +1524,7 @@ class HyperUnetDense(ne.modelio.LoadableModel):
             half_res=unet_half_res,
             hyp_input=hyp_input,
             hyp_tensor=hyp_last,
-            final_activation_function=activation,
+            final_activation_function='sigmoid',#activation,
             name='%s_unet%d' % (name, i),
             output_nc=trg_feats
         )
@@ -1528,17 +1533,15 @@ class HyperUnetDense(ne.modelio.LoadableModel):
 
         #outputs = tf.nn.softmax(tf.concat(output_list, -1),-1)
         #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
-        weight_sum_layer = weight_sum(dim=ndims)
+
         #outputs = tf.concat((unet_model1.output, unet_model1.output, unet_model1.output),-1)
         #hyp=hyp_input[0,...]/tf.reduce_sum(hyp_input[0,...])
         #hyp=tf.nn.softmax(hyp_input[0,...])
-
+        weight_sum_layer = weight_sum(dim=ndims)
         outputs = tf.concat(output_list, -1)
         outputs = weight_sum_layer(outputs, hyp_input)  # hyp_input[0,...])
         if activation is None:
             outputs = tf.keras.activations.sigmoid(outputs)
-
-
 
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
 
