@@ -1519,7 +1519,7 @@ class HyperUnetDense(ne.modelio.LoadableModel):
             half_res=unet_half_res,
             hyp_input=hyp_input,
             hyp_tensor=hyp_last,
-            final_activation_function=activation,
+            final_activation_function='sigmoid',#activation,
             name='%s_unet%d' % (name, i),
             output_nc=trg_feats
         )
