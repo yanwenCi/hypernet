@@ -258,7 +258,7 @@ with tf.device(device):
         image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
 
-    save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch')
+    save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
     )
