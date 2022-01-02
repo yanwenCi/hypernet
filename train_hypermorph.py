@@ -111,7 +111,7 @@ hyperps = np.load('hyperp.npy')
 
 def random_hyperparam(hyper_num):
 
-    if args.mod == 2:
+    if args.mod == 2 or args.mod==3:
         #hyper_val = hyperps[50]
         hyper_val = np.array([26,12,12,-19])
         #hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
@@ -219,8 +219,7 @@ with tf.device(device):
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
-        nb_hyp_params=args.hyper_num,
-        activation=args.activation)
+        nb_hyp_params=args.hyper_num)
 
     # model = vxm.networks.UnetDense(
     #     inshape=inshape,
@@ -263,12 +262,12 @@ with tf.device(device):
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
     )
-    training_history = model.fit(generator,initial_epoch=args.initial_epoch,
+    training_history = model.fit(hyp_generator,initial_epoch=args.initial_epoch,
                         epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
                         callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
                         validation_steps=validation_steps,
-                        validation_data=generator_valid)
+                        validation_data=hyp_generator_valid)
 
     # save final weights
     model.save(save_filename.format(epoch=args.epochs))

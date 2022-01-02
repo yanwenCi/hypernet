@@ -112,10 +112,10 @@ def random_hyperparam(hyper_num):
 
     if args.mod == 2:
         #hyper_val = hyperps[50]
-        hyper_val = np.random.uniform(low=-2, high=2, size=(hyper_num,))
+        hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
         #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
-        hyper_val =np.random.rand(hyper_num)
+        hyper_val =np.random.dirichlet(np.ones(hyper_num), size=1)[0]
     return hyper_val
 
 def hyp_generator():
@@ -135,6 +135,11 @@ def hyp_generator_valid():
         inputs = (*inputs, hyp)
         yield (inputs, outputs)
 
+if args.mod==0:
+    args.activ='sigmoid'
+elif args.mod==2:
+    args.hyper_num+=1
+    args.activ=None
 
 generator = hyp_generator()
 generator_valid = hyp_generator_valid()
@@ -185,10 +190,8 @@ def test(model_test):
         plt.imshow(predicted[0, :, :, 48, 0])
         plt.show()
         #vxm.py.utils.save_volfile(predicted, 'example.nii')
-if args.mod==0:
-    args.activ='sigmoid'
-elif args.mod==2:
-    args.activ=None
+
+
 
 with tf.device(device):
 
@@ -207,7 +210,8 @@ with tf.device(device):
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
-        activate=args.activ)
+        activate=args.activ,
+        nb_hyp_params=args.hyper_num)
 
     print(model.summary())
     #load initial weights (if provided)
@@ -239,16 +243,16 @@ with tf.device(device):
         image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
 
-    save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch')
+    save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
     )
-    training_history = model.fit(base_generator,initial_epoch=args.initial_epoch,
+    training_history = model.fit(hyp_generator(),initial_epoch=args.initial_epoch,
                         epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
                         callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
                         validation_steps=validation_steps,
-                        validation_data=base_generator_valid)
+                        validation_data=hyp_generator_valid())
 
     # save final weights
     model.save(save_filename.format(epoch=args.epochs))
