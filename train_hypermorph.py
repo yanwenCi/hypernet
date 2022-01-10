@@ -113,10 +113,10 @@ def random_hyperparam(hyper_num):
 
     if args.mod == 2 or args.mod==3:
         #hyper_val = hyperps[50]
-        hyper_val = np.array([26,12,12,-19])
+        #hyper_val = np.array([26,12,12,-19])
         #hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
         #hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
-        #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
+        hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
         hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
         #hyper_val =np.random.uniform(low=-10, high=10, size=(hyper_num,))
@@ -151,10 +151,11 @@ elif args.mod==1:
 elif args.mod ==2:
     #weighted logistic w bias
     args.hyper_num+=1
-    args.from_logits=True
+    args.from_logits=False#True
 elif args.mod==3:
-    #logistic wo bias
+    #logistic w/ bias
     args.from_logits=True
+    args.hyper_num+=1
 
 generator = hyp_generator()
 generator_valid = hyp_generator_valid()
@@ -262,12 +263,12 @@ with tf.device(device):
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
     )
-    training_history = model.fit(hyp_generator,initial_epoch=args.initial_epoch,
+    training_history = model.fit(hyp_generator(),initial_epoch=args.initial_epoch,
                         epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
                         callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
                         validation_steps=validation_steps,
-                        validation_data=hyp_generator_valid)
+                        validation_data=hyp_generator_valid())
 
     # save final weights
     model.save(save_filename.format(epoch=args.epochs))
