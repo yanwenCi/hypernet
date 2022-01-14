@@ -99,9 +99,9 @@ def random_hyperparam(hyper_num):
     else:
         if args.mod == 2:
             #hyper_val = hyperps[60]
-            hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
+            #hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
             #hyper_val = np.random.uniform(low=-20, high=20, size=(hyper_num,))
-            #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
+            hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
         else:
             hyper_val =np.random.dirichlet(np.ones(3), size=1)[0]
     return hyper_val
@@ -207,14 +207,14 @@ with tf.device(device):
         accuracy_all.append([accuracy, accuracy_t, accuracy_p])
         print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
 
-        #if i%10==0:
-        seg_result = predicted.squeeze()
+        if i%10==0:
+            seg_result = predicted.squeeze()
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
-        vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))        
-        vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_t2w.nii.gz' % (name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(inputs[1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy))) 
-        vxm.py.utils.save_volfile(inputs[2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))   
+            vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))        
+            vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_t2w.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(inputs[1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy))) 
+            vxm.py.utils.save_volfile(inputs[2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))   
     
     sum_accu = np.array(accuracy_all).sum(axis=0)                                     
     print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t), sum_accu[2] / (len(accuracy_all) - number_p))
