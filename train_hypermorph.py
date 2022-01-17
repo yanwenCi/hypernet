@@ -107,7 +107,7 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 
 # random hyperparameter generator
 
-hyperps = np.load('hyperp.npy')
+hyperps = np.load('hyperp255.npy')
 
 def random_hyperparam(hyper_num):
 

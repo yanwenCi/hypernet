@@ -95,7 +95,7 @@ gpu_avilable = tf.config.experimental.list_physical_devices('GPU')
 
 def random_hyperparam(hyper_num):
     if args.hyper_val is not None:
-        hyper_val = np.array([float(i) for i in args.hyper_val.split(',')])
+        hyper_val = np.array([float(i) for i in args.hyper_val.split(',')[1:]])
     else:
         if args.mod == 2:
             #hyper_val = hyperps[60]
@@ -207,7 +207,7 @@ with tf.device(device):
         accuracy_all.append([accuracy, accuracy_t, accuracy_p])
         print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
 
-        if i%10==0:
+        if i%1==0:
             seg_result = predicted.squeeze()
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
             vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))        
