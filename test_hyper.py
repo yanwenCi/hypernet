@@ -116,7 +116,7 @@ base_generator = vxm.generators.multi_mods_gen(
     args.img_list, phase='test', batch_size=args.batch_size, test= True, add_feat_axis=add_feat_axis)
 # random hyperparameter generator
 
-hyperps = np.load('hyperp.npy')
+hyperps = np.load('hyperp_sample.npy')
 
 
 if args.mod ==2 :

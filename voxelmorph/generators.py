@@ -117,7 +117,7 @@ def multivolgen_test(
         # load volumes and concatenate
         load_params = dict(np_var=np_var, add_batch_axis=True, add_feat_axis=add_feat_axis,
                            pad_shape=pad_shape, resize_factor=resize_factor, crop_size=crop_size)
-        for vol_names in [t2w_filenames, adc_filenames, dwi_filenames]:
+        for vol_names in [t2w_filenames, dwi_filenames, adc_filenames]:
             imgs = [py.utils.load_volfile(vol_names[i], **load_params) for i in indices]
             vols.append(np.concatenate(imgs, axis=0))
         names.append([t2w_filenames[i].split('/')[-1] for i in indices])
@@ -192,7 +192,7 @@ def multivolgen(
         # load volumes and concatenate
         load_params = dict(np_var=np_var, add_batch_axis=True, add_feat_axis=add_feat_axis,
                            pad_shape=pad_shape, resize_factor=resize_factor, crop_size=crop_size)
-        for vol_names in [t2w_filenames, adc_filenames, dwi_filenames]:
+        for vol_names in [t2w_filenames, dwi_filenames, adc_filenames]:
             imgs = [py.utils.load_volfile(vol_names[i], **load_params) for i in indices]
             vols.append(np.concatenate(imgs, axis=0))
 
@@ -280,7 +280,7 @@ def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
             yield (invols, outvols, zone, name)
         else:
             scan1, scan2, scan3, msk= next(gen)
-            invols = [scan1, scan2,  scan3]
+            invols = [scan1, sca3,  scan3]
             outvols =[msk, msk, msk, msk]
             #outvols = [msk]
             yield (invols, outvols)

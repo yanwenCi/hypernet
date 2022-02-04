@@ -126,25 +126,17 @@ if __name__=='__main__':
     os.environ["CUDA_VISIBLE_DEVICES"]='2'
     space=[]
     Y=[]
-    i=0
-    valid()
-    # while True:
-    #     if i>200:
-    #         break
-    #     else:
-    #
-    #         hyp_g=hyperp_generator(torch.tensor([[i]]))
-    #         if hyp_g.generator() is not None:
-    #             i+=1
-    #             space.append(np.array(hyp_g.generator()[0].cpu().data))
-    #             print (hyp_g.generator())
-            #np.savetxt('hyper.txt', hyp_g.generator()[1].cpu().data)
-#    for i in range(1, np.power(2,8)):
-#            hyp_g = hyperp_generator(i)
-#            if hyp_g.generator() is not None:
-#                i += 1
-#                space.append(np.array(hyp_g.generator()[0].cpu().data))
-#                print(hyp_g.generator())
-#                Y.append(np.array([int(h) for h in '{0:08b}'.format(i)]))
-#    np.save('hyperp_sample.npy', np.array(space))
-#    np.save('sample_Y.npy', Y)
+    j=0
+    #valid()
+    while True:
+        for i in range(1, np.power(2,8)):
+            hyp_g = hyperp_generator(i)
+            if hyp_g.generator() is not None:
+                j += 1
+                space.append(np.array(hyp_g.generator()[0].cpu().data))
+                print(hyp_g.generator())
+                Y.append(np.array([int(h) for h in '{0:08b}'.format(i)]))
+        if j>200:
+            break
+    np.save('hyperp_sample.npy', np.array(space))
+    np.save('sample_Y.npy', Y)

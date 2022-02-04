@@ -76,8 +76,7 @@ parser.add_argument('--int-downsize', type=int, default=2,
                     help='flow downsample factor for integration (default: 2)')
 
 # loss hyperparameters
-parser.add_argument('--activation', type=str, default=None)
-parser.add_argument('--mod', type=int, required=True)
+parser.add_argument('--mod', type=int, default=None)
 parser.add_argument('--hyper_num', type=int, default=3)
 
 
@@ -107,19 +106,16 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 
 # random hyperparameter generator
 
-hyperps = np.load('hyperp_sample.npy')
+hyperps = np.load('hyperp.npy')
 
 def random_hyperparam(hyper_num):
 
-    if args.mod == 2 or args.mod==3:
+    if args.mod == 2:
         #hyper_val = hyperps[50]
-        #hyper_val = np.array([26,12,12,-19])
-        #hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
-        #hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
-        hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
+        hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
+        #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
-        hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
-        #hyper_val =np.random.uniform(low=-10, high=10, size=(hyper_num,))
+        hyper_val =np.random.dirichlet(np.ones(hyper_num), size=1)[0]
     return hyper_val
 
 def hyp_generator():
@@ -139,23 +135,11 @@ def hyp_generator_valid():
         inputs = (*inputs, hyp)
         yield (inputs, outputs)
 
-if args.mod ==0:
-    # weighted wo bias 0
-    args.activation = 'sigmoid'
-    args.from_logits=False
-elif args.mod==1:
-    #weighted w bias 
-    args.from_logits=False
+if args.mod==0:
+    args.activ='sigmoid'
+elif args.mod==2:
     args.hyper_num+=1
-    args.activation = 'sigmoid'
-elif args.mod ==2:
-    #weighted logistic w bias
-    args.hyper_num+=1
-    args.from_logits=False#True
-elif args.mod==3:
-    #logistic w/ bias
-    args.from_logits=True
-    args.hyper_num+=1
+    args.activ=None
 
 generator = hyp_generator()
 generator_valid = hyp_generator_valid()
@@ -187,47 +171,57 @@ def test(model_test):
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs = data
-        inputs = (*inputs, hyp)
+        #inputs = (*inputs, hyp)
 
-        # layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[98].output)
-        # feature1 = layer_model.predict(inputs)
-        # layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[99].output)
-        # feature2 = layer_model.predict(inputs)
-        # layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[100].output)
-        # feature3 = layer_model.predict(inputs)
-        feature1, feature2, feature3,predicted = model_test.predict(inputs)
+        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[93].output)
+        feature1 = layer_model.predict(inputs)
+        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[94].output)
+        feature2 = layer_model.predict(inputs)
+        predicted = model_test.predict(inputs)
         predicted=tf.keras.activations.sigmoid(predicted)
         import matplotlib.pyplot as plt
-        plt.subplot(2,3,1)
+        plt.subplot(2,2,1)
         plt.imshow(feature1[0,:,:,48,0])
-        plt.subplot(2, 3, 2)
+        plt.subplot(2, 2, 2)
         plt.imshow(feature2[0, :, :, 48, 0])
-        plt.subplot(2, 3, 3)
-        plt.imshow(feature3[0,:,:,48,0])
-        plt.subplot(2,3,4)
+        plt.subplot(2, 2, 3)
         plt.imshow(outputs[0][0, :, :, 48, 0])
-        plt.subplot(2, 3, 5)
+        plt.subplot(2, 2, 4)
         plt.imshow(predicted[0, :, :, 48, 0])
         plt.show()
         #vxm.py.utils.save_volfile(predicted, 'example.nii')
 
+
+
 with tf.device(device):
 
     # build the model
-    model = vxm.networks.HyperUnetDense(
+    # model = vxm.networks.HyperUnetDense(
+    #     inshape=inshape,
+    #     nb_unet_features=[enc_nf, dec_nf],
+    #     src_feats=nfeats,
+    #     trg_feats=nfeats,
+    #     unet_half_res=False,
+    #     nb_hyp_params=args.hyper_num)
+    model=vxm.networks.Unet(
+             input_model=input_model,
+             nb_features=[enc_nf,dec_nf],
+             nb_levels=nb_unet_levels,
+             feat_mult=unet_feat_mult,
+             nb_conv_per_level=nb_unet_conv_per_level,
+             half_res=unet_half_res,
+             hyp_input=hyp_input,
+             hyp_tensor=hyp_last,
+             name='%s_unet' % name
+)
+    model = vxm.networks.UnetDense(
         inshape=inshape,
         nb_unet_features=[enc_nf, dec_nf],
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
+        activate=args.activ,
         nb_hyp_params=args.hyper_num)
-
-    # model = vxm.networks.UnetDense(
-    #     inshape=inshape,
-    #     nb_unet_features=[enc_nf, dec_nf],
-    #     src_feats=nfeats,
-    #     trg_feats=nfeats,
-    #     unet_half_res=False)
 
     print(model.summary())
     #load initial weights (if provided)
@@ -240,9 +234,9 @@ with tf.device(device):
     #hyper_val=model.references.hyper_val
     if args.image_loss == 'dice':
         #image_loss_func = vxm.losses.HyperBinaryDiceLoss(hyper_val, args.mod).loss
-        image_loss1 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='t2w')
-        image_loss2 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='adc')
-        image_loss3 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='dwi')
+        image_loss1 = vxm.losses.HyperBinaryDiceLoss(0).loss
+        image_loss2 = vxm.losses.HyperBinaryDiceLoss(0).loss
+        image_loss3 = vxm.losses.HyperBinaryDiceLoss(0).loss
         image_loss_func = vxm.losses.HyperBinaryDiceLoss(args.mod).loss
         ce_loss = tf.keras.losses.BinaryCrossentropy(
             from_logits=True, label_smoothing=0, name='binary_crossentropy'
