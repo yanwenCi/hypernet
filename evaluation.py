@@ -30,7 +30,7 @@ def main(args):
     for path_t2w, path_adc, path_dwi, path_lab, path_pre in zip(t2w_list, adc_list, dwi_list, lab_list, pre_list):
         if os.path.exists(path_adc) and os.path.exists(path_dwi) and os.path.exists(path_lab) and os.path.exists(
                 path_pre):
-            print('Processiong {}...'.format(os.path.split(path_pre)[-1]))
+            print('Processing {}...'.format(os.path.split(path_pre)[-1]))
             # t2w = nib.load(path_t2w).get_fdata()
             # adc = nib.load(path_adc).get_fdata()
             # dwi = nib.load(path_dwi).get_fdata()
@@ -107,7 +107,7 @@ def metrics(pred, target):
         pred_seg[pred_seg>thre]=1
         pred_seg[pred_seg<=thre]=0
 
-        dice_vals[p-1]=dice_score(pred_seg, target)
+        dice_vals[p-1]=dice_score.loss(pred_seg.reshape((1,)+pred_seg.shape+(1,)), target.reshape((1,)+pred_seg.shape+(1,)))
         surf_dist=sd.compute_surface_distances(np.array(pred_seg, dtype=bool), np.array(target, dtype=bool), (1,1,1))
         hausd_dist[p-1]=sd.compute_robust_hausdorff(surf_dist,95)
         hausd_dist[np.isinf(hausd_dist)]=50

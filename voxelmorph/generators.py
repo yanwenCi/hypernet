@@ -254,6 +254,38 @@ def scan_to_scan(vol_names, bidir=False, batch_size=1, prob_same=0, no_warp=Fals
 
         yield (invols, outvols)
 
+def single_mods_gen(vol_names,  batch_size=1, test=False, type=1,  **kwargs):
+    """
+    Generator for scan-to-scan registration.
+
+    Parameters:
+        vol_names: List of volume files to load, or list of preloaded volumes.
+        bidir: Yield input image as output for bidirectional models. Default is False.
+        batch_size: Batch size. Default is 1.
+        prob_same: Induced probability that source and target inputs are the same. Default is 0.
+        no_warp: Excludes null warp in output list if set to True (for affine training).
+            Default if False.
+        kwargs: Forwarded to the internal volgen generator.
+    """
+    if test:
+        gen = multivolgen_test(vol_names, batch_size= batch_size, **kwargs)
+    else:
+        gen = multivolgen(vol_names, batch_size=batch_size,  **kwargs)
+
+    while True:
+        if test:
+            scan1 = next(gen)
+            invols = [scan1[type]]
+            outvols = [scan1[3]]
+            yield (invols, outvols, scan1[4], scan1[5])
+        else:
+            scan1= next(gen)
+            invols = [scan1[type]]
+            outvols = [scan1[3]]
+            #outvols = [msk]
+            yield (invols, outvols)
+
+
 def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
     """
     Generator for scan-to-scan registration.
@@ -280,7 +312,7 @@ def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
             yield (invols, outvols, zone, name)
         else:
             scan1, scan2, scan3, msk= next(gen)
-            invols = [scan1, sca3,  scan3]
+            invols = [scan1, scan2,  scan3]
             outvols =[msk, msk, msk, msk]
             #outvols = [msk]
             yield (invols, outvols)

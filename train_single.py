@@ -76,7 +76,8 @@ parser.add_argument('--int-downsize', type=int, default=2,
                     help='flow downsample factor for integration (default: 2)')
 
 # loss hyperparameters
-parser.add_argument('--mod', type=int, default=None)
+parser.add_argument('--activ', default='sigmoid')
+parser.add_argument('--type', type=int, default=1)
 parser.add_argument('--hyper_num', type=int, default=3)
 
 
@@ -98,56 +99,25 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
     # scan-to-scan generator
-base_generator = vxm.generators.multi_mods_gen(
-        args.img_list,phase='train', batch_size=args.batch_size, add_feat_axis=add_feat_axis)
+base_generator = vxm.generators.single_mods_gen(
+        args.img_list,phase='train', batch_size=args.batch_size, add_feat_axis=add_feat_axis, type=args.type)
 
-base_generator_valid = vxm.generators.multi_mods_gen(
-        args.img_list,phase='valid', batch_size=args.batch_size, add_feat_axis=add_feat_axis)
+base_generator_valid = vxm.generators.single_mods_gen(
+        args.img_list,phase='valid', batch_size=args.batch_size, add_feat_axis=add_feat_axis, type=args.type)
 
 # random hyperparameter generator
 
 hyperps = np.load('hyperp.npy')
 
-def random_hyperparam(hyper_num):
-
-    if args.mod == 2:
-        #hyper_val = hyperps[50]
-        hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
-        #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
-    else:
-        hyper_val =np.random.dirichlet(np.ones(hyper_num), size=1)[0]
-    return hyper_val
-
-def hyp_generator():
-    while True:
-        hyper_val = random_hyperparam(args.hyper_num)
-        hyp = np.array([hyper_val for _ in range(args.batch_size)])
-        inputs, outputs = next(base_generator)
-        inputs = (*inputs, hyp)
-        yield (inputs, outputs)
 
 
-def hyp_generator_valid():
-    while True:
-        hyper_val = random_hyperparam(args.hyper_num)
-        hyp=np.array([hyper_val for _ in range(args.batch_size)])
-        inputs, outputs =next(base_generator_valid)
-        inputs = (*inputs, hyp)
-        yield (inputs, outputs)
 
-if args.mod==0:
-    args.activ='sigmoid'
-elif args.mod==2:
-    args.hyper_num+=1
-    args.activ=None
 
-generator = hyp_generator()
-generator_valid = hyp_generator_valid()
 validation_steps=100
 #validation_steps=np.ceil(len(valid_files)/args.batch_size)
 
 # extract shape and number of features from sampled input
-sample_shape = next(generator)[0][0].shape
+sample_shape = next(base_generator)[0][0].shape
 inshape = sample_shape[1:-1]
 nfeats = sample_shape[-1]
 
@@ -195,33 +165,13 @@ def test(model_test):
 
 with tf.device(device):
 
-    # build the model
-    # model = vxm.networks.HyperUnetDense(
-    #     inshape=inshape,
-    #     nb_unet_features=[enc_nf, dec_nf],
-    #     src_feats=nfeats,
-    #     trg_feats=nfeats,
-    #     unet_half_res=False,
-    #     nb_hyp_params=args.hyper_num)
-    model=vxm.networks.Unet(
-             input_model=input_model,
-             nb_features=[enc_nf,dec_nf],
-             nb_levels=nb_unet_levels,
-             feat_mult=unet_feat_mult,
-             nb_conv_per_level=nb_unet_conv_per_level,
-             half_res=unet_half_res,
-             hyp_input=hyp_input,
-             hyp_tensor=hyp_last,
-             name='%s_unet' % name
-)
-    model = vxm.networks.UnetDense(
+    model = vxm.networks.UnetSingle(
         inshape=inshape,
         nb_unet_features=[enc_nf, dec_nf],
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
-        activate=args.activ,
-        nb_hyp_params=args.hyper_num)
+        activate=args.activ)
 
     print(model.summary())
     #load initial weights (if provided)
@@ -234,10 +184,7 @@ with tf.device(device):
     #hyper_val=model.references.hyper_val
     if args.image_loss == 'dice':
         #image_loss_func = vxm.losses.HyperBinaryDiceLoss(hyper_val, args.mod).loss
-        image_loss1 = vxm.losses.HyperBinaryDiceLoss(0).loss
-        image_loss2 = vxm.losses.HyperBinaryDiceLoss(0).loss
-        image_loss3 = vxm.losses.HyperBinaryDiceLoss(0).loss
-        image_loss_func = vxm.losses.HyperBinaryDiceLoss(args.mod).loss
+        image_loss_func = vxm.losses.HyperBinaryDiceLoss(0).loss
         ce_loss = tf.keras.losses.BinaryCrossentropy(
             from_logits=True, label_smoothing=0, name='binary_crossentropy'
                 )
@@ -249,20 +196,18 @@ with tf.device(device):
 
     # prepare loss functions and compile model
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
-        image_loss1, image_loss2, image_loss3,
-                                                                                   image_loss_func])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss_func])
 
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
     )
-    training_history = model.fit(hyp_generator(),initial_epoch=args.initial_epoch,
+    training_history = model.fit(base_generator,initial_epoch=args.initial_epoch,
                         epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
                         callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
                         validation_steps=validation_steps,
-                        validation_data=hyp_generator_valid())
+                        validation_data=base_generator_valid)
 
     # save final weights
     model.save(save_filename.format(epoch=args.epochs))
