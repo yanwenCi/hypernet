@@ -173,7 +173,7 @@ class Dice:
         self.with_logits=with_logits
 
     def loss(self, y_true, y_pred):
-        ndims = len(y_pred.shape) - 2
+        ndims = 3#len(y_pred.shape) - 2
         vol_axes = list(range(1, ndims + 1))
         if self.with_logits:
             y_pred = tf.keras.activations.sigmoid(y_pred)

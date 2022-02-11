@@ -215,6 +215,7 @@ with tf.device(device):
             vxm.py.utils.save_volfile(inputs[1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy))) 
             vxm.py.utils.save_volfile(inputs[2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))   
-    
+            vxm.py.utils.save_volfile(p_lesion, os.path.join(save_file, '%s_dice_%.4f_pz.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(t_lesion, os.path.join(save_file, '%s_dice_%.4f_tz.nii.gz' % (name[0].split('.')[0], accuracy)))
     sum_accu = np.array(accuracy_all).sum(axis=0)                                     
     print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t), sum_accu[2] / (len(accuracy_all) - number_p))

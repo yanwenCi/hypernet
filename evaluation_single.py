@@ -11,6 +11,8 @@ import surface_distance as sd
 import csv
 import copy
 import voxelmorph as vxm
+import os
+
 
 def main(args):
     path=args.sou_path
@@ -22,14 +24,12 @@ def main(args):
 
     #path='/data0/yw/jupyter_folder/Attention-Gated-Network/experiment_unet_3mod80'
 
-    t2w_list = glob.glob(path + '/*t2w.nii.gz')
-    adc_list = [i.replace('t2w.nii.gz', 'adc.nii.gz') for i in t2w_list]
-    dwi_list = [i.replace('t2w.nii.gz', 'dwi.nii.gz') for i in t2w_list]
-    lab_list = [i.replace('t2w.nii.gz', 'label.nii.gz') for i in t2w_list]
+    lab_list = glob.glob(path + '/*label.nii.gz')
+
+    t2w_list = [i.replace('label.nii.gz', 'pred.nii.gz') for i in lab_list]
     pre_list = [i.replace('_t2w.nii.gz', '.nii.gz') for i in t2w_list]
-    for path_t2w, path_adc, path_dwi, path_lab, path_pre in zip(t2w_list, adc_list, dwi_list, lab_list, pre_list):
-        if os.path.exists(path_adc) and os.path.exists(path_dwi) and os.path.exists(path_lab) and os.path.exists(
-                path_pre):
+    for path_t2w, path_lab, path_pre in zip(t2w_list, lab_list, pre_list):
+
             print('Processing {}...'.format(os.path.split(path_pre)[-1]))
             # t2w = nib.load(path_t2w).get_fdata()
             # adc = nib.load(path_adc).get_fdata()
@@ -127,8 +127,11 @@ def metrics(pred, target):
 
 
 if __name__=='__main__':
+
     import argparse
     parser=argparse.ArgumentParser()
     parser.add_argument("--sou_path", '-sp',default='/data0/yw/jupyter_folder/Attention-Gated-Network/experiment_unet_3mod80')
+    parser.add_argument("-gpu", type=str, default="0")
     args=parser.parse_args()
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     main(args)

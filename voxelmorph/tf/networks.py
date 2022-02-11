@@ -1446,6 +1446,66 @@ class UnetDense(ne.modelio.LoadableModel):
         self.references.y_source = outputs
 
 
+class UnetSingle(ne.modelio.LoadableModel):
+    """
+    HyperMorph-VxmDense network amortized hyperparameter learning.
+    """
+
+    @ne.modelio.store_config_args
+    def __init__(self,
+                 inshape,
+                 nb_unet_features=None,
+                 nb_unet_levels=None,
+                 unet_feat_mult=1,
+                 nb_unet_conv_per_level=1,
+                 src_feats=1,
+                 trg_feats=1,
+                 unet_half_res=False,
+                 activate=None,
+                 name='single'):
+
+
+        # ensure correct dimensionality
+        ndims = len(inshape)
+        assert ndims in [1, 2, 3], 'ndims should be one of 1, 2, or 3. found: %d' % ndims
+        output_list=[]
+        # configure default input layers if an input model is not provided
+        source1 = tf.keras.Input(shape=(*inshape, src_feats), name='%s_source1_input' % name)
+
+
+        # input_model = tf.keras.Model(inputs=[source1,source2, source3], outputs=[source1, source2, source3])
+        input_model = tf.keras.Model(inputs=[source1], outputs=[source1])
+
+        # build core unet model and grab inputs
+
+        unet_model1 = Unet(
+            input_model=input_model,
+            nb_features=nb_unet_features,
+            nb_levels=nb_unet_levels,
+            feat_mult=unet_feat_mult,
+            nb_conv_per_level=nb_unet_conv_per_level,
+            half_res=unet_half_res,
+            hyp_input=None,
+            hyp_tensor=None,
+            final_activation_function=activate,
+            name='%s_unet' % (name),
+            output_nc=trg_feats
+        )
+
+
+
+        outputs =  unet_model1.output
+        #outputs = tf.concat((unet_model1.output, unet_model2.output, unet_model3.output), -1)
+
+        # outputs =  tf.concat((seg1,seg2,seg3),-1)
+
+        super().__init__(name=name, inputs=[source1], outputs=[outputs])
+
+        # cache pointers to layers and tensors for future reference
+        self.references = ne.modelio.LoadableModel.ReferenceContainer()
+        self.references.unet_model = unet_model1
+        self.references.y_source = outputs
+
 
 class HyperUnetDense(ne.modelio.LoadableModel):
     """

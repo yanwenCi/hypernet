@@ -4,7 +4,7 @@ regularization weight hyperparameter.
 
 If you use this code, please cite the following:
 
-    A Hoopes, M Hoffmann, B Fischl, J Guttag, AV Dalca. 
+    A Hoopes, M Hoffmann, B Fischl, J Guttag, AV Dalca.
     HyperMorph: Amortized Hyperparameter Learning for Image Registration
     IPMI: Information Processing in Medical Imaging. 2021. https://arxiv.org/abs/2101.01035
 
@@ -29,13 +29,12 @@ import tensorflow as tf
 import voxelmorph as vxm
 from tensorflow.keras import backend as K
 from datetime import datetime
-
-
-#from tqdm.keras import TqdmCallback
-#tf.compat.v1.disable_eager_execution()
+# from tqdm.keras import TqdmCallback
+# tf.compat.v1.disable_eager_execution()
 
 from tensorflow.python.framework.ops import disable_eager_execution
-#disable_eager_execution()
+
+# disable_eager_execution()
 # tf.executing_eagerly()
 # tf.eagerly()
 # parse the commandline
@@ -48,6 +47,7 @@ parser.add_argument('--img-suffix', help='optional input image file suffix')
 parser.add_argument('--hyper_gen', help='atlas filename')
 parser.add_argument('--model-dir', default='models',
                     help='model output directory (default: models)')
+parser.add_argument('--pred-dir', default='Pred_dir')
 parser.add_argument('--multichannel', action='store_true',
                     help='specify that data has multiple channels')
 parser.add_argument('--test-reg', nargs=3,
@@ -60,7 +60,7 @@ parser.add_argument('--epochs', type=int, default=600,
                     help='number of training epochs (default: 6000)')
 parser.add_argument('--steps-per-epoch', type=int, default=500,
                     help='steps per epoch (default: 100)')
-parser.add_argument('--load-weights', help='optional weights file to initialize with')
+parser.add_argument('--load-weights', required = True, help='optional weights file to initialize with')
 parser.add_argument('--initial-epoch', type=int, default=0,
                     help='initial epoch number (default: 0)')
 parser.add_argument('--lr', type=float, default=1e-6, help='learning rate (default: 1e-4)')
@@ -76,10 +76,9 @@ parser.add_argument('--int-downsize', type=int, default=2,
                     help='flow downsample factor for integration (default: 2)')
 
 # loss hyperparameters
-parser.add_argument('--activ', default='sigmoid')
-parser.add_argument('--type', type=int, default=1)
+parser.add_argument('--type', type=int, default=None)
+parser.add_argument('--activ',  default='sigmoid')
 parser.add_argument('--hyper_num', type=int, default=3)
-
 
 parser.add_argument('--image-loss', default='dice',
                     help='image reconstruction loss - can be mse or ncc (default: mse)')
@@ -93,28 +92,17 @@ os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 gpu_avilable = tf.config.experimental.list_physical_devices('GPU')
 print(gpu_avilable)
 
-logdir = args.model_dir+"/logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+
+logdir = args.model_dir + "/logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
-    # scan-to-scan generator
+# scan-to-scan generator
 base_generator = vxm.generators.single_mods_gen(
-        args.img_list,phase='train', batch_size=args.batch_size, add_feat_axis=add_feat_axis, type=args.type)
-
-base_generator_valid = vxm.generators.single_mods_gen(
-        args.img_list,phase='valid', batch_size=args.batch_size, add_feat_axis=add_feat_axis, type=args.type)
-
+    args.img_list, phase='test', batch_size=args.batch_size, test= True, add_feat_axis=add_feat_axis, type=args.type)
 # random hyperparameter generator
 
-hyperps = np.load('hyperp.npy')
-
-
-
-
-
-validation_steps=100
-#validation_steps=np.ceil(len(valid_files)/args.batch_size)
 
 # extract shape and number of features from sampled input
 sample_shape = next(base_generator)[0][0].shape
@@ -131,40 +119,15 @@ dec_nf = args.dec if args.dec else [32, 32, 32, 32, 16]
 
 # prepare model checkpoint save path
 save_filename = os.path.join(model_dir, '{epoch:04d}.h5')
-
+accuracy_all=[]
 # tensorflow device handling
 device, nb_devices = vxm.tf.utils.setup_device(args.gpu)
-
-
-def test(model_test):
-    for i, data in enumerate(base_generator_valid):
-        hyper_val = random_hyperparam(args.hyper_num)
-        hyp = np.array([hyper_val for _ in range(args.batch_size)])
-        inputs, outputs = data
-        #inputs = (*inputs, hyp)
-
-        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[93].output)
-        feature1 = layer_model.predict(inputs)
-        layer_model = tf.keras.Model(inputs=model_test.input, outputs=model.layers[94].output)
-        feature2 = layer_model.predict(inputs)
-        predicted = model_test.predict(inputs)
-        predicted=tf.keras.activations.sigmoid(predicted)
-        import matplotlib.pyplot as plt
-        plt.subplot(2,2,1)
-        plt.imshow(feature1[0,:,:,48,0])
-        plt.subplot(2, 2, 2)
-        plt.imshow(feature2[0, :, :, 48, 0])
-        plt.subplot(2, 2, 3)
-        plt.imshow(outputs[0][0, :, :, 48, 0])
-        plt.subplot(2, 2, 4)
-        plt.imshow(predicted[0, :, :, 48, 0])
-        plt.show()
-        #vxm.py.utils.save_volfile(predicted, 'example.nii')
-
-
-
+save_file = os.path.join(args.pred_dir, args.model_dir.split('/')[-1])
+if not os.path.exists(save_file):
+    os.makedirs(save_file)
+results=[]
 with tf.device(device):
-
+    # build the model
     model = vxm.networks.UnetSingle(
         inshape=inshape,
         nb_unet_features=[enc_nf, dec_nf],
@@ -174,44 +137,53 @@ with tf.device(device):
         activate=args.activ)
 
     print(model.summary())
-    #load initial weights (if provided)
-    if args.load_weights:
-        model.load_weights(os.path.join(model_dir, '{:04d}.h5'.format(int(args.load_weights))))
-        print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
+    # load initial weights (if provided)
 
-    #test(model)
+    model.load_weights(os.path.join(model_dir, '{:04d}.h5'.format(int(args.load_weights))))
+    print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
+
     # prepare image loss
-    #hyper_val=model.references.hyper_val
-    if args.image_loss == 'dice':
-        #image_loss_func = vxm.losses.HyperBinaryDiceLoss(hyper_val, args.mod).loss
-        image_loss_func = vxm.losses.HyperBinaryDiceLoss(0).loss
-        ce_loss = tf.keras.losses.BinaryCrossentropy(
-            from_logits=True, label_smoothing=0, name='binary_crossentropy'
-                )
-    elif args.image_loss == 'mse':
-        scaling = 1.0 / (args.image_sigma ** 2)
-        image_loss_func = lambda x1, x2: scaling * K.mean(K.batch_flatten(K.square(x1 - x2)), -1)
-    else:
-        raise ValueError('Image loss should be "mse" or "ncc", but found "%s"' % args.image_loss)
-
+    accuracy_func=vxm.losses.Dice(with_logits=False)
+    number_p, number_t=0,0
     # prepare loss functions and compile model
+    for i, data in enumerate(base_generator):
+        inputs, outputs, zone, name = data
+        predicted = model.predict(inputs)[-1]
+        # predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
+        # print(predicted.max())
+        p_zone = np.zeros_like(outputs[0])
+        p_zone[zone == 1] = 1
+        t_zone = np.zeros_like(outputs[0])
+        t_zone[zone == 2] = 1
+        # import matplotlib.pyplot as plt
+        # plt.imshow(p_zone[0,:,:,46,0])
+        # plt.show()
+        p_lesion = outputs[0] * p_zone
+        t_lesion = outputs[0] * t_zone
+        if np.sum(p_lesion) < 3:
+            number_p += 1
+            # print('    %s p zone has no lesion' % name[0])
+        if np.sum(t_lesion) < 3:
+            number_t += 1
+            # print('    %s t zone has no lesion' % name[0])
+        p_predict = predicted.round() * p_zone
+        t_predict = predicted.round() * t_zone
+        accuracy = accuracy_func.loss(outputs[0], predicted.round())
+        accuracy_p = accuracy_func.loss(p_lesion, p_predict)
+        accuracy_t = accuracy_func.loss(t_lesion, t_predict)
+        accuracy_all.append([accuracy, accuracy_t, accuracy_p])
+        print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss_func])
+        #if i % 10 == 0:
+        seg_result = predicted.squeeze()
+            # print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
+        vxm.py.utils.save_volfile(seg_result,
+                                      os.path.join(save_file, '%s_dice_%.4f_pred.nii.gz' % (name[0].split('.')[0], accuracy)))
+        vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))
 
-    save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
-    logger = tf.keras.callbacks.CSVLogger(
-        os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
-    )
-    training_history = model.fit(base_generator,initial_epoch=args.initial_epoch,
-                        epochs=args.epochs,
-                        steps_per_epoch=args.steps_per_epoch,
-                        callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
-                        validation_steps=validation_steps,
-                        validation_data=base_generator_valid)
-
-    # save final weights
-    model.save(save_filename.format(epoch=args.epochs))
-    print("Average test loss: ", np.average(training_history.history['loss']))
-    
-    # save an example registration across lambda values
+        vxm.py.utils.save_volfile(outputs[0].squeeze(),
+                                      os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))
+    sum_accu = np.array(accuracy_all).sum(axis=0)
+    print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),
+          sum_accu[2] / (len(accuracy_all) - number_p))
 
