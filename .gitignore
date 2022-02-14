@@ -4,3 +4,4 @@ checkpoints/
 data/data_lesion/
 results/
 scratch/*
+*.sh
