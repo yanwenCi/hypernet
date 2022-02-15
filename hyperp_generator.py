@@ -100,7 +100,7 @@ class hyperp_generator():
 
 def valid():
     space=[]
-    hyp=np.load('hyperp255.npy')
+    hyp=np.load('hyperp.npy')
     X = torch.tensor([
         [1.0, 0.0, 0.0],
         [1.0, 0.0, 1.0],
@@ -118,7 +118,7 @@ def valid():
     #with open('sample_Y.csv', 'w') as file:
     #    writer = csv.writer(file)
     #    writer.writerows(space)
-    np.save('sample_Y255.npy', np.array(space))
+    np.save('sample_Y.npy', np.array(space))
 
 if __name__=='__main__':
     import os
@@ -127,8 +127,9 @@ if __name__=='__main__':
     space=[]
     Y=[]
     j=0
-    #valid()
-    while True:
+    valid()
+    T=False
+    while T:
         for i in range(1, np.power(2,8)):
             hyp_g = hyperp_generator(i)
             if hyp_g.generator() is not None:
@@ -138,5 +139,5 @@ if __name__=='__main__':
                 Y.append(np.array([int(h) for h in '{0:08b}'.format(i)]))
         if j>200:
             break
-    np.save('hyperp_sample.npy', np.array(space))
-    np.save('sample_Y.npy', Y)
+    #np.save('hyperp.npy', np.array(space))
+    #np.save('sample_Y.npy', Y)
