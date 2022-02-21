@@ -98,7 +98,7 @@ def multivolgen_test(
     """
 
     # convert glob path to filenames
-    path_list=open(os.path.join(path, phase+'_pair_path_list.txt'), 'r').readlines()
+    path_list=open(os.path.join(path, phase, 'pair_path_list.txt'), 'r').readlines()
     t2w_filenames = [x.strip().split(' ')[0] for x in path_list]
     adc_filenames = [x.strip().split(' ')[3] for x in path_list]
     dwi_filenames = [x.strip().split(' ')[4] for x in path_list]
@@ -175,7 +175,7 @@ def multivolgen(
     """
 
     # convert glob path to filenames
-    path_list=open(os.path.join(path, phase+'_pair_path_list.txt'), 'r').readlines()
+    path_list=open(os.path.join(path, phase,'pair_path_list.txt'), 'r').readlines()
     t2w_filenames = [x.strip().split(' ')[0] for x in path_list]
     adc_filenames = [x.strip().split(' ')[3] for x in path_list]
     dwi_filenames = [x.strip().split(' ')[4] for x in path_list]
@@ -307,12 +307,12 @@ def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
     while True:
         if test:
             scan1, scan2, scan3, msk, zone, name = next(gen)
-            invols = [scan2, scan3, scan1]
+            invols = [scan1, scan2, scan3]
             outvols = [msk, msk, msk, msk]
             yield (invols, outvols, zone, name)
         else:
             scan1, scan2, scan3, msk= next(gen)
-            invols = [scan2, scan3,  scan1]
+            invols = [scan1, scan2,  scan3]
             outvols =[msk, msk, msk, msk]
             #outvols = [msk]
             yield (invols, outvols)
