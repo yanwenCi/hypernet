@@ -193,12 +193,12 @@ with tf.device(device):
         # plt.show()
         p_lesion=outputs[0]*p_zone
         t_lesion=outputs[0]*t_zone
-        if np.sum(p_lesion)<3:
+        if np.sum(p_lesion)<8:
             number_p+=1
             #print('    %s p zone has no lesion' % name[0])
-        if np.sum(t_lesion)<3:
+        if np.sum(t_lesion)<8:
             number_t+=1
-            #print('    %s t zone has no lesion' % name[0])
+            print('    %s t zone has no lesion' % name[0])
         p_predict=predicted.round()*p_zone
         t_predict=predicted.round()*t_zone
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
