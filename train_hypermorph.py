@@ -221,7 +221,7 @@ with tf.device(device):
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
-        nb_hyp_params=args.hyper_num
+        nb_hyp_params=args.hyper_num,
         activation=args.activation)
 
     # model = vxm.networks.UnetDense(
