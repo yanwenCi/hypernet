@@ -141,16 +141,17 @@ def hyp_generator_valid():
 
 if args.mod ==0:
     # weighted wo bias 0
-    args.activation = 'sigmoid'
+    args.activation = False
     args.from_logits=False
 elif args.mod==1:
     #weighted w bias 
     args.from_logits=False
     args.hyper_num+=1
-    args.activation = 'sigmoid'
+    args.activation = False
 elif args.mod ==2:
     #weighted logistic w bias
     args.hyper_num+=1
+    args.activation = True
     args.from_logits=False#True
 elif args.mod==3:
     #logistic w/ bias
@@ -220,7 +221,8 @@ with tf.device(device):
         src_feats=nfeats,
         trg_feats=nfeats,
         unet_half_res=False,
-        nb_hyp_params=args.hyper_num)
+        nb_hyp_params=args.hyper_num
+        activation=args.activation)
 
     # model = vxm.networks.UnetDense(
     #     inshape=inshape,
