@@ -29,6 +29,8 @@ import tensorflow as tf
 import voxelmorph as vxm
 from tensorflow.keras import backend as K
 from datetime import datetime
+
+import surface_distance as sd
 # from tqdm.keras import TqdmCallback
 # tf.compat.v1.disable_eager_execution()
 
@@ -171,8 +173,19 @@ with tf.device(device):
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
-        accuracy_all.append([accuracy, accuracy_t, accuracy_p])
-        print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
+        
+        surf_dist=sd.compute_surface_distances(np.array(predicted.squeeze(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
+        hausd_dist=sd.compute_robust_hausdorff(surf_dist,95)
+        hausd_dist=min(50 ,hausd_dist)
+        surf_dist_tz=sd.compute_surface_distances(np.array(t_predict.squeeze(), dtype=bool), np.array(t_lesion.squeeze(), dtype=bool), (1,1,1))
+        hausd_dist_tz=sd.compute_robust_hausdorff(surf_dist_tz,95)
+        hausd_dist_tz=min(50,hausd_dist_tz)
+        surf_dist_pz=sd.compute_surface_distances(np.array(p_predict.squeeze(), dtype=bool), np.array(p_lesion.squeeze(), dtype=bool), (1,1,1))
+        hausd_dist_pz=sd.compute_robust_hausdorff(surf_dist_pz,95)
+        hausd_dist_pz=min(50,hausd_dist_pz)
+        accuracy_all.append([accuracy, accuracy_t, accuracy_p,hausd_dist,hausd_dist_tz,hausd_dist_pz])
+
+        print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy(),)
 
         #if i % 10 == 0:
         seg_result = predicted.squeeze()
@@ -185,5 +198,5 @@ with tf.device(device):
         vxm.py.utils.save_volfile(outputs[0].squeeze(),  os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))
     sum_accu = np.array(accuracy_all).sum(axis=0)
     print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),
-          sum_accu[2] / (len(accuracy_all) - number_p))
+          sum_accu[2] / (len(accuracy_all) - number_p), sum_accu[3]/len(accuracy_all),sum_accu[4]/(len(accuracy_all)),sum_accu[5]/(len(accuracy_all)))
 
