@@ -160,10 +160,10 @@ with tf.device(device):
         # plt.show()
         p_lesion = outputs[0] * p_zone
         t_lesion = outputs[0] * t_zone
-        if np.sum(p_lesion) < 3:
+        if np.sum(p_lesion) < 27:
             number_p += 1
             # print('    %s p zone has no lesion' % name[0])
-        if np.sum(t_lesion) < 3:
+        if np.sum(t_lesion) < 27:
             number_t += 1
             # print('    %s t zone has no lesion' % name[0])
         p_predict = predicted.round() * p_zone
@@ -180,9 +180,9 @@ with tf.device(device):
         vxm.py.utils.save_volfile(seg_result,
                                       os.path.join(save_file, '%s_dice_%.4f_pred.nii.gz' % (name[0].split('.')[0], accuracy)))
         vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))
-
-        vxm.py.utils.save_volfile(outputs[0].squeeze(),
-                                      os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))
+        vxm.py.utils.save_volfile(p_zone.squeeze(), os.path.join(save_file, '%s_dice_%.4f_pz.nii.gz' % (name[0].split('.')[0], accuracy)))
+        vxm.py.utils.save_volfile(t_zone.squeeze(), os.path.join(save_file, '%s_dice_%.4f_tz.nii.gz' % (name[0].split('.')[0], accuracy)))
+        vxm.py.utils.save_volfile(outputs[0].squeeze(),  os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))
     sum_accu = np.array(accuracy_all).sum(axis=0)
     print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),
           sum_accu[2] / (len(accuracy_all) - number_p))
