@@ -28,7 +28,7 @@ def main(args):
 
     t2w_list = [i.replace('label.nii.gz', 'pred.nii.gz') for i in lab_list]
     pre_list = [i.replace('_t2w.nii.gz', '.nii.gz') for i in t2w_list]
-    tz_list = [i.replace('label.nii.gz', 'tzd.nii.gz') for i in lab_list]
+    tz_list = [i.replace('label.nii.gz', 'tz.nii.gz') for i in lab_list]
     pz_list = [i.replace('label.nii.gz', 'pz.nii.gz') for i in lab_list]
     for path_t2w, path_lab, path_pre, path_tz, path_pz in zip(t2w_list, lab_list, pre_list, tz_list,pz_list):
 
