@@ -28,7 +28,9 @@ def main(args):
 
     t2w_list = [i.replace('label.nii.gz', 'pred.nii.gz') for i in lab_list]
     pre_list = [i.replace('_t2w.nii.gz', '.nii.gz') for i in t2w_list]
-    for path_t2w, path_lab, path_pre in zip(t2w_list, lab_list, pre_list):
+    tz_list = [i.replace('label.nii.gz', 'tzd.nii.gz') for i in lab_list]
+    pz_list = [i.replace('label.nii.gz', 'pz.nii.gz') for i in lab_list]
+    for path_t2w, path_lab, path_pre, path_tz, path_pz in zip(t2w_list, lab_list, pre_list, tz_list,pz_list):
 
             print('Processing {}...'.format(os.path.split(path_pre)[-1]))
             # t2w = nib.load(path_t2w).get_fdata()
@@ -36,6 +38,14 @@ def main(args):
             # dwi = nib.load(path_dwi).get_fdata()
             lab = nib.load(path_lab).get_fdata()
             pre = nib.load(path_pre).get_fdata()
+            if args.zone=='pz':
+                zone=nib.load(path_pz).get_fdata()
+                lab=zone*lab
+                pre=zone*pre
+            elif args.zone=='tz':
+                zone = nib.load(path_tz).get_fdata()    
+                lab=zone*lab
+                pre=zone*pre
             hausd_dist, dice_vals, precision, recal,number_tplesion_gt, number_tplesion_pd, od_acc_tp, od_acc_fp, gt_number, pred_number=metrics(pre, lab)
             dice_mean.append([path_pre.split('/')[-1]]+hausd_dist.tolist() + dice_vals.tolist() + precision.tolist() + recal.tolist())
             number_of_pg.append([path_pre.split('/')[-1]]+number_tplesion_gt.tolist() + number_tplesion_pd.tolist())
@@ -132,6 +142,7 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument("--sou_path", '-sp',default='/data0/yw/jupyter_folder/Attention-Gated-Network/experiment_unet_3mod80')
     parser.add_argument("-gpu", type=str, default="0")
+    parser.add_argument('-zone',choices=['pz','tz','pr'])
     args=parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     main(args)
