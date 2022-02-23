@@ -111,11 +111,12 @@ hyperps = np.load('hyperp.npy')
 
 def random_hyperparam(hyper_num):
 
-    if args.mod == 2 or args.mod==3:
+    if args.mod == 3:
         #hyper_val = hyperps[50]
         #hyper_val = np.array([26,12,12,-19])
         #hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
-        #hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
+        hyper_val = np.random.uniform(low=-1, high=1, size=(hyper_num,))*20.0
+    elif args.mod == 2:
         hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
     else:
         hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
