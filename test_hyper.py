@@ -124,8 +124,9 @@ if args.mod ==2 :
     # weighted 0
     # logic 1
     args.hyper_num += 1
+    args.activation=True
 elif args.mod==0:
-    args.activation='sigmoid'
+    args.activation=False
 #elif args.mod==3:
     
 
@@ -205,7 +206,7 @@ with tf.device(device):
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
-        surf_dist=sd.compute_surface_distances(np.array(predicted.squeeze(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
+        surf_dist=sd.compute_surface_distances(np.array(predicted.squeeze().round(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
         hausd_dist=sd.compute_robust_hausdorff(surf_dist,95)
         hausd_dist=min(50 ,hausd_dist)
         surf_dist_tz=sd.compute_surface_distances(np.array(t_predict.squeeze(), dtype=bool), np.array(t_lesion.squeeze(), dtype=bool), (1,1,1))
