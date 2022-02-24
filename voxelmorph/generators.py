@@ -274,14 +274,20 @@ def single_mods_gen(vol_names,  batch_size=1, test=False, type=1,  **kwargs):
 
     while True:
         if test:
-            scan1 = next(gen)
-            invols = [scan1[type]]
-            outvols = [scan1[3]]
+            scan = next(gen)
+            if type<3:
+                invols = [scan[type]]
+            else:
+                invols = tf.concat([scan[0],scan[1],scan[2]], axis=-1)
+            outvols = [scan[3]]
             yield (invols, outvols, scan1[4], scan1[5])
         else:
-            scan1= next(gen)
-            invols = [scan1[type]]
-            outvols = [scan1[3]]
+            scan= next(gen)
+            if type<3:
+                invols = [scan[type]]
+            else:
+                invols = tf.concat([scan[0],scan[1],scan[2]],axis=-1)
+            outvols = [scan[3]]
             #outvols = [msk]
             yield (invols, outvols)
 
