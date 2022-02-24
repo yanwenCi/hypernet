@@ -139,6 +139,9 @@ dec_nf = args.dec if args.dec else [32, 32, 32, 32, 16]
 # prepare model checkpoint save path
 save_filename = os.path.join(model_dir, '{epoch:04d}.h5')
 accuracy_all=[]
+lesion_tp_num=[]
+accuracy_all=[]
+
 # tensorflow device handling
 device, nb_devices = vxm.tf.utils.setup_device(args.gpu)
 save_file = os.path.join(args.pred_dir, args.model_dir.split('/')[-1])
@@ -181,19 +184,40 @@ with tf.device(device):
         # plt.show()
         p_lesion = outputs[0] * p_zone
         t_lesion = outputs[0] * t_zone
-        if np.sum(p_lesion) < 3:
-            number_p += 1
-            # print('    %s p zone has no lesion' % name[0])
-        if np.sum(t_lesion) < 3:
-            number_t += 1
-            # print('    %s t zone has no lesion' % name[0])
         p_predict = predicted.round() * p_zone
         t_predict = predicted.round() * t_zone
         accuracy = accuracy_func.loss(outputs[0], predicted.round())
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
-        accuracy_all.append([accuracy, accuracy_t, accuracy_p])
-        print('  ',name[0], accuracy.numpy(), accuracy_t.numpy(), accuracy_p.numpy())
+        
+        surf_dist=sd.compute_surface_distances(np.array(predicted.squeeze().round(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
+        hausd_dist=sd.compute_robust_hausdorff(surf_dist,95)
+        hausd_dist=min(50 ,hausd_dist)
+        surf_dist_tz=sd.compute_surface_distances(np.array(t_predict.squeeze(), dtype=bool), np.array(t_lesion.squeeze(), dtype=bool), (1,1,1))
+        hausd_dist_tz=sd.compute_robust_hausdorff(surf_dist_tz,95)
+        hausd_dist_tz=min(50,hausd_dist_tz)
+        surf_dist_pz=sd.compute_surface_distances(np.array(p_predict.squeeze(), dtype=bool), np.array(p_lesion.squeeze(), dtype=bool), (1,1,1))
+        hausd_dist_pz=sd.compute_robust_hausdorff(surf_dist_pz,95)
+        hausd_dist_pz=min(50,hausd_dist_pz)
+
+        thresh=[0.25]
+        overlap_pd_tz, number_tp_pd_tz, pred_lesion_tz=pn_rate(t_lesion.squeeze(),t_predict.squeeze(), thresh ,direct='pred')
+        overlap_gt_tz, number_tp_gt_tz, gt_lesion_tz=pn_rate(t_lesion.squeeze(), t_predict.squeeze(),thresh, direct='gt')
+        overlap_pd_pz, number_tp_pd_pz, pred_lesion_pz=pn_rate(p_lesion.squeeze(),p_predict.squeeze(), thresh ,direct='pred')
+        overlap_gt_pz, number_tp_gt_pz, gt_lesion_pz=pn_rate(p_lesion.squeeze(), p_predict.squeeze(),thresh, direct='gt')
+        overlap_pd, number_tp_pd, pred_lesion=pn_rate(outputs[0].squeeze(),predicted.round().squeeze(), thresh ,direct='pred')
+        overlap_gt, number_tp_gt, gt_lesion=pn_rate(outputs[0].squeeze(), predicted.round().squeeze(), thresh, direct='gt')
+
+        if np.sum(p_lesion)<27:
+            accuracy_p=np.nan
+            hasud_dist_pz=np.nan
+        if np.sum(t_lesion)<27:
+            accuracy_t=np.nan
+            hausd_dist_tz=np.nan
+        accuracy_all.append([accuracy, accuracy_t, accuracy_p,hausd_dist,hausd_dist_tz,hausd_dist_pz])
+        lesion_all.append([gt_lesion, pred_lesion, gt_lesion_tz,pred_lesion_tz,gt_lesion_pz,pred_lesion_pz])
+        lesion_tp_num.append([number_tp_gt,number_tp_pd, number_tp_gt_tz,number_tp_pd_tz,number_tp_gt_pz,number_tp_pd_pz])
+        print('  ',name[0], accuracy, accuracy_t, accuracy_p)
 
         #if i % 10 == 0:
         seg_result = predicted.squeeze()
@@ -208,6 +232,9 @@ with tf.device(device):
         vxm.py.utils.save_volfile(p_lesion,os.path.join(save_file, '%s_dice_%.4f_pz.nii.gz' % (name[0].split('.')[0], accuracy)))
         vxm.py.utils.save_volfile(t_lesion, os.path.join(save_file,'%s_dice_%.4f_tz.nii.gz' % (name[0].split('.')[0], accuracy)))
     sum_accu = np.array(accuracy_all).sum(axis=0)
-    print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),
-          sum_accu[2] / (len(accuracy_all) - number_p))
+    
+    print('std: ',np.nanstd(np.array(accuracy_all), axis=0))
+    print('mean: ',np.nanmean(np.array(accuracy_all),axis=0))
+    print('lesion: ', np.sum(np.array(lesion_tp_num), axis=0)/np.sum(np.array(lesion_all),axis=0))
+    #print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),sum_accu[2] / (len(accuracy_all) - number_p))
 
