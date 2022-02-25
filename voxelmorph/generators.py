@@ -278,7 +278,7 @@ def single_mods_gen(vol_names,  batch_size=1, test=False, type=1,  **kwargs):
             if type<3:
                 invols = [scan[type]]
             else:
-                invols = tf.concat([scan[0],scan[1],scan[2]], axis=-1)
+                invols = [np.concatenate((scan[0],scan[1],scan[2]), axis=-1)]
             outvols = [scan[3]]
             yield (invols, outvols, scan1[4], scan1[5])
         else:
@@ -286,7 +286,7 @@ def single_mods_gen(vol_names,  batch_size=1, test=False, type=1,  **kwargs):
             if type<3:
                 invols = [scan[type]]
             else:
-                invols = tf.concat([scan[0],scan[1],scan[2]],axis=-1)
+                invols = [np.concatenate((scan[0],scan[1],scan[2]),axis=-1)]
             outvols = [scan[3]]
             #outvols = [msk]
             yield (invols, outvols)

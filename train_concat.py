@@ -56,7 +56,7 @@ parser.add_argument('--test-reg', nargs=3,
 # training parameters
 parser.add_argument('--gpu', default='2', help='GPU ID numbers (default: 0)')
 parser.add_argument('--batch-size', type=int, default=1, help='batch size (default: 1)')
-parser.add_argument('--epochs', type=int, default=600,
+parser.add_argument('--epochs', type=int, default=100,
                     help='number of training epochs (default: 6000)')
 parser.add_argument('--steps-per-epoch', type=int, default=500,
                     help='steps per epoch (default: 100)')

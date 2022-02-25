@@ -19,12 +19,14 @@ new=[]
 for i in range(len(data)):
     hyp=data[i]
     log=open(os.path.join('checkpoints',f,'test{}_log'.format(i)),'r')
-    log_line=log.readlines()[-1]
+    log_line=log.readlines()[-2]
     log_line=log_line.split(' ')
-    log_line=[float(k) for k in log_line]
+    log_line=list(filter(None, log_line))[1:]
+    print(log_line)
+    log_line=[float(k.strip().strip('[').strip(']')) for k in log_line]
     y=Y[i]
     print(log_line)
-    new.append(hyp.tolist()+log_line+y.tolist())
+    new.append(y.tolist()+hyp.tolist()+log_line)
     
 
 with open(os.path.join('checkpoints',f,'results_log.csv'),'w') as file:
