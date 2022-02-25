@@ -169,7 +169,7 @@ with tf.device(device):
         inshape=inshape,
         nb_unet_features=[enc_nf, dec_nf],
         src_feats=nfeats,
-        trg_feats=nfeats,
+        trg_feats=1,
         unet_half_res=False,
         activate=args.activ)
 

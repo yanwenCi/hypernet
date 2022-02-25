@@ -168,6 +168,8 @@ with tf.device(device):
     number_p, number_t=0,0
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
+        if i >2:
+            break
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs, zone, name = data
@@ -217,24 +219,26 @@ with tf.device(device):
         accuracy_all.append([accuracy, accuracy_t, accuracy_p,hausd_dist,hausd_dist_tz,hausd_dist_pz])
         lesion_all.append([gt_lesion, pred_lesion, gt_lesion_tz,pred_lesion_tz,gt_lesion_pz,pred_lesion_pz])
         lesion_tp_num.append([number_tp_gt,number_tp_pd, number_tp_gt_tz,number_tp_pd_tz,number_tp_gt_pz,number_tp_pd_pz])
-        print('  ',name[0], accuracy, accuracy_t, accuracy_p)
+        #print('  ',name[0], accuracy, accuracy_t, accuracy_p)
 
-        #if i % 10 == 0:
-        seg_result = predicted.squeeze()
+        if i % 100 == 0:
+            seg_result = predicted.squeeze()
             # print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
-        vxm.py.utils.save_volfile(seg_result,
+            vxm.py.utils.save_volfile(seg_result,
                                       os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_t2w.nii.gz' % (name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(inputs[1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(inputs[2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(outputs[0].squeeze(),
+            vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_t2w.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(inputs[1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(inputs[2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(outputs[0].squeeze(),
                                       os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))
-        vxm.py.utils.save_volfile(p_lesion,os.path.join(save_file, '%s_dice_%.4f_pz.nii.gz' % (name[0].split('.')[0], accuracy)))
-        vxm.py.utils.save_volfile(t_lesion, os.path.join(save_file,'%s_dice_%.4f_tz.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(p_lesion,os.path.join(save_file, '%s_dice_%.4f_pz.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(t_lesion, os.path.join(save_file,'%s_dice_%.4f_tz.nii.gz' % (name[0].split('.')[0], accuracy)))
     sum_accu = np.array(accuracy_all).sum(axis=0)
     
-    print('std: ',np.nanstd(np.array(accuracy_all), axis=0))
-    print('mean: ',np.nanmean(np.array(accuracy_all),axis=0))
+    print('std: ',np.round(np.nanstd(np.array(accuracy_all), axis=0),4))
+    print('mean: ',np.round(np.nanmean(np.array(accuracy_all),axis=0),4))
     print('lesion: ', np.sum(np.array(lesion_tp_num), axis=0)/np.sum(np.array(lesion_all),axis=0))
+    print('lesion_std: ', np.nanstd(np.array(lesion_tp_num)/np.array(lesion_all),axis=0))
+
     #print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),sum_accu[2] / (len(accuracy_all) - number_p))
 
