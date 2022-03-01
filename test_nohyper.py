@@ -31,9 +31,9 @@ from tensorflow.keras import backend as K
 from datetime import datetime
 # from tqdm.keras import TqdmCallback
 # tf.compat.v1.disable_eager_execution()
-
+import surface_distance as sd
 from tensorflow.python.framework.ops import disable_eager_execution
-
+from metrics import pn_rate
 # disable_eager_execution()
 # tf.executing_eagerly()
 # tf.eagerly()
@@ -118,10 +118,10 @@ hyperps = np.load('hyperp.npy')
 if args.mod ==0:
     # weighted 0
     # logic 1
-    args.activ='sigmoid'
+    args.activ=False
 elif args.mod==2:
+    args.activ=True
     args.hyper_num+=1
-    args.activ=None
 
 # extract shape and number of features from sampled input
 sample_shape = next(base_generator)[0][0].shape

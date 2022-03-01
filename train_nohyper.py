@@ -136,10 +136,10 @@ def hyp_generator_valid():
         yield (inputs, outputs)
 
 if args.mod==0:
-    args.activ='sigmoid'
+    args.activ=False
 elif args.mod==2:
     args.hyper_num+=1
-    args.activ=None
+    args.activ=True
 
 generator = hyp_generator()
 generator_valid = hyp_generator_valid()
