@@ -52,11 +52,12 @@ parser.add_argument('--multichannel', action='store_true',
                     help='specify that data has multiple channels')
 parser.add_argument('--test-reg', nargs=3,
                     help='example registration pair and result (moving fixed moved) to test')
+parser.add_argument('--hyper-val', default=None)
 
 # training parameters
 parser.add_argument('--gpu', default='2', help='GPU ID numbers (default: 0)')
 parser.add_argument('--batch-size', type=int, default=1, help='batch size (default: 1)')
-parser.add_argument('--epochs', type=int, default=600,
+parser.add_argument('--epochs', type=int, default=400,
                     help='number of training epochs (default: 6000)')
 parser.add_argument('--steps-per-epoch', type=int, default=500,
                     help='steps per epoch (default: 100)')
@@ -110,17 +111,19 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 hyperps = np.load('hyperp.npy')
 
 def random_hyperparam(hyper_num):
-
-    if args.mod == 3:
+    if args.hyper_val is None:
+        if args.mod == 3:
         #hyper_val = hyperps[50]
         #hyper_val = np.array([26,12,12,-19])
         #hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
-        hyper_val = np.random.uniform(low=-1, high=1, size=(hyper_num,))*20.0
-    elif args.mod == 2:
-        hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
-    else:
-        hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
+            hyper_val = np.random.uniform(low=-1, high=1, size=(hyper_num,))*20.0
+        elif args.mod == 2:
+            hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
+        else:
+            hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
         #hyper_val =np.random.uniform(low=-10, high=10, size=(hyper_num,))
+    else:
+        hyper_val =np.asarray( list(map(float,args.hyper_val.split(',')[1:])))
     return hyper_val
 
 def hyp_generator():

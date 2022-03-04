@@ -140,7 +140,7 @@ dec_nf = args.dec if args.dec else [32, 32, 32, 32, 16]
 save_filename = os.path.join(model_dir, '{epoch:04d}.h5')
 accuracy_all=[]
 lesion_tp_num=[]
-accuracy_all=[]
+lesion_all=[]
 
 # tensorflow device handling
 device, nb_devices = vxm.tf.utils.setup_device(args.gpu)
@@ -168,8 +168,6 @@ with tf.device(device):
     number_p, number_t=0,0
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
-        if i >2:
-            break
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs, zone, name = data
