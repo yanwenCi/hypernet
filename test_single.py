@@ -174,7 +174,7 @@ with tf.device(device):
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
         
-        surf_dist=sd.compute_surface_distances(np.array(predicted.squeeze(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
+        surf_dist=sd.compute_surface_distances(np.array(predicted.squeeze().round(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
         hausd_dist=sd.compute_robust_hausdorff(surf_dist,95)
         hausd_dist=min(50 ,hausd_dist)
         surf_dist_tz=sd.compute_surface_distances(np.array(t_predict.squeeze(), dtype=bool), np.array(t_lesion.squeeze(), dtype=bool), (1,1,1))
@@ -205,7 +205,7 @@ with tf.device(device):
         lesion_all.append([gt_lesion, pred_lesion, gt_lesion_tz,pred_lesion_tz,gt_lesion_pz,pred_lesion_pz])
         lesion_tp_num.append([number_tp_gt,number_tp_pd, number_tp_gt_tz,number_tp_pd_tz,number_tp_gt_pz,number_tp_pd_pz])
 
-        print('  ',name[0], accuracy, accuracy_t, accuracy_p)
+        #print('  ',name[0], accuracy, accuracy_t, accuracy_p)
 
         if i % 100 == 0:
             seg_result = predicted.squeeze()
