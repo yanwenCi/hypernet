@@ -94,7 +94,8 @@ class hyperp_generator():
 
         a_lreg, res_lreg, y=self.optim()
         aq=torch.mean(res_lreg ** 2)
-        if aq<1e-7:
+        print(aq)
+        if aq<3e-6:
             return a_lreg, y
 
 
@@ -123,21 +124,22 @@ def valid():
 if __name__=='__main__':
     import os
     import csv
-    os.environ["CUDA_VISIBLE_DEVICES"]='2'
+    os.environ["CUDA_VISIBLE_DEVICES"]='0'
     space=[]
     Y=[]
     j=0
-    valid()
-    T=False
+    #valid()
+    T=True
     while T:
         for i in range(1, np.power(2,8)):
             hyp_g = hyperp_generator(i)
             if hyp_g.generator() is not None:
                 j += 1
                 space.append(np.array(hyp_g.generator()[0].cpu().data))
-                print(hyp_g.generator())
+                #print(hyp_g.generator())
                 Y.append(np.array([int(h) for h in '{0:08b}'.format(i)]))
-        if j>200:
+        #T=False
+        if j>500:
             break
-    #np.save('hyperp.npy', np.array(space))
-    #np.save('sample_Y.npy', Y)
+    np.save('hyperp_train.npy', np.array(space))
+    np.save('sample_train.npy', Y)
