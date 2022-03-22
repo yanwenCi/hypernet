@@ -181,6 +181,8 @@ with tf.device(device):
     number=[]
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
+        if i>10:
+            break
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs, zone, name = data
@@ -234,7 +236,7 @@ with tf.device(device):
         lesion_tp_num.append([number_tp_gt,number_tp_pd, number_tp_gt_tz,number_tp_pd_tz,number_tp_gt_pz,number_tp_pd_pz])
         #print('  ',name[0], accuracy, accuracy_t, accuracy_p)
 
-        if i%100==0:
+        if i%1==0:
             seg_result = predicted.squeeze()
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
             vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))        

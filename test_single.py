@@ -207,11 +207,14 @@ with tf.device(device):
 
         #print('  ',name[0], accuracy, accuracy_t, accuracy_p)
 
-        if i % 100 == 0:
+        if i % 1 == 0:
             seg_result = predicted.squeeze()
             # print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
             vxm.py.utils.save_volfile(seg_result,
                                       os.path.join(save_file, '%s_dice_%.4f_pred.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(inputs[0][:,0,...].squeeze(), os.path.join(save_file, '%s_dice_%.4f_t2w.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(inputs[0][:,2,...].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(inputs[0][:,1,...].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(p_zone.squeeze(), os.path.join(save_file, '%s_dice_%.4f_pz.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(t_zone.squeeze(), os.path.join(save_file, '%s_dice_%.4f_tz.nii.gz' % (name[0].split('.')[0], accuracy)))

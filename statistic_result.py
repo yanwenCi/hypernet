@@ -18,10 +18,12 @@ Y=np.load(args.Y)
 new=[]
 for i in range(len(data)):
     hyp=data[i]
+    if hyp[-1]>1:
+        continue
     log=open(os.path.join('checkpoints',f,'test{}_log'.format(i)),'r')
     log_line=log.readlines()[1]
     log_line=log_line.split(' ')
-    log_line=[i.replace('[','') for i in log_line]
+    log_line=[i.replace('[','').strip(',') for i in log_line]
     log_line=list(filter(None, log_line))[1:7]
     log_line=[float(k.strip().strip('[').strip(']')) for k in log_line]
     y=Y[i]
