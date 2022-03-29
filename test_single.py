@@ -149,6 +149,8 @@ with tf.device(device):
     number_p, number_t=0,0
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
+        if i>20:
+            break
         inputs, outputs, zone, name = data
         predicted = model.predict(inputs)[-1]
         # predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
