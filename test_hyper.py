@@ -181,7 +181,7 @@ with tf.device(device):
     number=[]
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
-        if i>10:
+        if i>20:
             break
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])

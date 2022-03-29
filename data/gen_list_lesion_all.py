@@ -3,7 +3,7 @@ from os.path import join
 
 pwd=os.getcwd()
     
-path='/raid/candi/Wen/ProstateSeg/Data/Data_by_modality'
+path='/raid/candi/Wen/ProstateSeg/Data/Data_by_modality_1k'
 
 mods=['t2w','lesion','zonal_mask','dwi','adc']
 split=['train', 'test', 'validation']
@@ -13,7 +13,7 @@ count=0
 adc_lost=0
 dwi_lost=0
 for g, sp in enumerate(split):
-    fpath='./data/data_lesion_cross3/'+sp
+    fpath='./data/data1k_cross3/'+sp
     if not os.path.exists(fpath):
             os.makedirs(fpath, mode=0o777)
     f.append(open(join(fpath,'pair_path_list.txt'), 'w'))
