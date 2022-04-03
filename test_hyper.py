@@ -187,8 +187,10 @@ with tf.device(device):
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs, zone, name = data
         inputs = (*inputs, hyp)
-        _,_,_,predicted = model.predict(inputs)
-        #predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
+        predicted = model.predict(inputs)
+        if isinstance(predicted,list):
+            predicted=predicted[0]
+            #predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
         #print(predicted.max())
         p_zone=np.zeros_like(outputs[0])
         p_zone[zone==1]=1
@@ -241,8 +243,8 @@ with tf.device(device):
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
             vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))        
             vxm.py.utils.save_volfile(inputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_t2w.nii.gz' % (name[0].split('.')[0], accuracy)))
-            vxm.py.utils.save_volfile(inputs[1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy))) 
-            vxm.py.utils.save_volfile(inputs[2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
+            vxm.py.utils.save_volfile(inputs[2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy))) 
+            vxm.py.utils.save_volfile(inputs[3].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(outputs[0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_label.nii.gz'% (name[0].split('.')[0],accuracy)))   
             vxm.py.utils.save_volfile(p_zone.squeeze(), os.path.join(save_file, '%s_dice_%.4f_pz.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(t_zone.squeeze(), os.path.join(save_file, '%s_dice_%.4f_tz.nii.gz' % (name[0].split('.')[0], accuracy)))
