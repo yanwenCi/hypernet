@@ -11,7 +11,7 @@ for i in range(len(data)):
         continue
     else:
         print(np.round(a,4))
-        cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/odds_hyp_cross1  --mod 2 --load-weights 269  --gpu 0 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/results_hyp/{}\n'.format(a,b,c,d,i))
+        cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/odds_valid_cross1  --mod 2 --load-weights 269  --gpu 0 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/odds_valid/{} >checkpoints/odds_valid_cross1/test{}_log\n'.format(a,b,c,d,i,i))
 
 f.writelines(cmd)
 f.close()

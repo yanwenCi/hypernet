@@ -95,7 +95,7 @@ class hyperp_generator():
         a_lreg, res_lreg, y=self.optim()
         aq=torch.mean(res_lreg ** 2)
         print(aq)
-        if aq<3e-6:
+        if aq<0.03:
             return a_lreg, y
 
 
@@ -141,5 +141,5 @@ if __name__=='__main__':
         #T=False
         if j>500:
             break
-    np.save('hyperp_train.npy', np.array(space))
-    np.save('sample_train.npy', Y)
+    np.save('hyperp_train_all.npy', np.array(space))
+    np.save('sample_train_all.npy', Y)

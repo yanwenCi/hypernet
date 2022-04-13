@@ -26,9 +26,12 @@ for i in range(len(data)):
     log_line=[i.replace('[','').strip(',') for i in log_line]
     log_line=list(filter(None, log_line))[1:7]
     log_line=[float(k.strip().strip('[').strip(']')) for k in log_line]
-    y=Y[i]
-    print(log_line)
-    new.append(y.tolist()+hyp.tolist()+log_line)
+    y=Y[i].tolist()
+    y=y[4:]+y[0:4]
+    no=[str(p) for p in y]
+    no=int(''.join(no),2)
+    print(log_line,y,no)
+    new.append([no]+y+hyp.tolist()+log_line)
     
 
 with open(os.path.join('checkpoints',f,'results_log.csv'),'w') as file:
