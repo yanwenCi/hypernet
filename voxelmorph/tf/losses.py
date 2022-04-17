@@ -27,11 +27,9 @@ import neurite as ne
 import tensorflow as tf
 import tensorflow.keras.backend as K
 
-class HyperBinaryDiceLoss:
-    def __init__(self,  args):
-        self.args=args
-        #self.hyperparam=hyperp
-
+class BinaryDiceLoss:
+    def __init__(self, with_logits=False):
+        self.with_logits=with_logits
     def loss(self, target, warped):
         #in y_true, y_pred order
         
@@ -57,7 +55,20 @@ class HyperBinaryDiceLoss:
         dice = tf.reduce_mean(div_no_nan(top, bottom))
         return 1-dice
 
+class HyperLoss:
+    def __init__(self, weight=0.5):
+        self.ce_loss= tf.keras.losses.BinaryCrossentropy(from_logits=False, name='cross_entropy')
+        self.dice_loss=BinaryDiceLoss()
+        #self.hyperparam=hyperp
+        self.weight=weight
 
+    def loss(self, y_true, y_pred):
+        #in y_true, y_pred order
+
+        loss_value1=self.dice_loss.loss(y_true,y_pred)
+        loss_value2=self.ce_loss(y_true,y_pred)
+
+        return loss_value1+loss_value2
 
 class NCC:
     """

@@ -249,7 +249,7 @@ with tf.device(device):
         image_loss1 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='t2w')
         image_loss2 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='adc')
         image_loss3 = tf.keras.losses.BinaryCrossentropy(from_logits=args.from_logits, name='dwi')
-        image_loss_func = vxm.losses.HyperBinaryDiceLoss(args.mod).loss
+        image_loss_func = vxm.losses.BinaryDiceLoss().loss#HyperLoss().loss
         ce_loss = tf.keras.losses.BinaryCrossentropy(
             from_logits=True, label_smoothing=0, name='binary_crossentropy'
                 )
