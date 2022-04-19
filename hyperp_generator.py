@@ -138,8 +138,8 @@ if __name__=='__main__':
                 space.append(np.array(hyp_g.generator()[0].cpu().data))
                 #print(hyp_g.generator())
                 Y.append(np.array([int(h) for h in '{0:08b}'.format(i)]))
-        T=False
+        #T=False
         if j>500:
             break
-    np.save('hyperp_test.npy', np.array(space))
-    np.save('sample_test.npy', Y)
+    np.save('hyperp_train.npy', np.array(space))
+    np.save('sample_train.npy', Y)
