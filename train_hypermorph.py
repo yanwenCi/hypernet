@@ -80,7 +80,7 @@ parser.add_argument('--int-downsize', type=int, default=2,
 parser.add_argument('--activation', type=str, default=None)
 parser.add_argument('--mod', type=int, required=True)
 parser.add_argument('--hyper_num', type=int, default=3)
-
+parser.add_argument('--nega_bias', type=bool, default=False)
 
 parser.add_argument('--image-loss', default='dice',
                     help='image reconstruction loss - can be mse or ncc (default: mse)')
@@ -109,8 +109,9 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 # random hyperparameter generator
 
 hyperps = np.load('hyperp_train.npy')
-hyperps = [i for i in hyperps if i[3]<0]
-print(hyperps)
+if args.nega_bias==True:
+    hyperps = [i for i in hyperps if i[3]<0]
+    print(hyperps)
 def random_hyperparam(hyper_num):
     if args.hyper_val is None:
         if args.mod == 3:

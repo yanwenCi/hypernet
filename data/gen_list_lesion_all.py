@@ -16,7 +16,7 @@ for g, sp in enumerate(split):
     fpath='./data/data1k_cross3/'+sp
     if not os.path.exists(fpath):
             os.makedirs(fpath, mode=0o777)
-    f.append(open(join(fpath,'pair_path_list.txt'), 'w'))
+    f.append(open(join(fpath,'pair_path_list_bp.txt'), 'w'))
 
 list_img=os.listdir(join(path, mods[0]))
 list_les=os.listdir(join(path,mods[1]))
@@ -53,12 +53,12 @@ for img_name in list_img:
                 adc_name='empty_volume.nii.gz'
                 line=line+join(path, mods[0], img_name)+' '+join(path, mods[1],img_name)+' '+join(path, mods[2], img_name)\
                         +' '+join(pwd, adc_name)+' '+join(path,mods[3],dwi_name)+'\n'
-    if count%6==3:
-        f[1].write(line)
-    elif count%6==4:
-        f[2].write(line)
-    else:
-        f[0].write(line)
+#    if count%6==3:
+#        f[1].write(line)
+#    elif count%6==4:
+#        f[2].write(line)
+#    else:
+#        f[0].write(line)
 print(count, adc_lost, dwi_lost)
 f[0].close()
 f[1].close()
