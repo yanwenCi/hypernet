@@ -2,7 +2,7 @@ import numpy as np
 
 data=np.load('hyperp_test.npy')
 print(data.shape)
-f=open('test_odds123.sh','w')
+f=open('run_hyper2.sh','w')
 f.write('#!/bin/bash\n')
 cmd=[]
 for i in range(len(data)):
@@ -11,7 +11,8 @@ for i in range(len(data)):
     #    continue
     #else:
     print(i, np.round(a,4))
-    cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/odds_noreg_cross1  --mod 2 --load-weights 300  --gpu 0 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/odds_noreg/{} >checkpoints/odds_noreg_cross1/test{}_log\n'.format(a,b,c,d,i,i))
+    cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints    /hyper2_{}_cross1  --mod 2  --gpu 0 --hyper-val ,{:>6f},{:>6f},{:>6f},{:>6f}\n'.format(i,a,b,c,d)
+    #cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/odds_noreg_cross1  --mod 2 --load-weights 300  --gpu 0 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/odds_noreg/{} >checkpoints/odds_noreg_cross1/test{}_log\n'.format(a,b,c,d,i,i))
 
 f.writelines(cmd)
 f.close()

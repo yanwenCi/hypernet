@@ -26,7 +26,7 @@ for img_name in sorted(list_img):
     img_name_pref=img_name.split('.')[0]
     #print(img_name_pref)
     dwi_names=sorted([i for i in list_dwi if img_name_pref in i])
-    dwi_names=[i for i in dwi_names if 'dwi1k4' in i]+[i for i in dwi_names if 'dwi2k' in i]+[i for i in dwi_names if 'dwi1k5' in i]
+    dwi_names=[i for i in dwi_names if 'dwi1k4' not in i]+[i for i in dwi_names if 'dwi2k' in i]+[i for i in dwi_names if 'dwi1k' in i]
     #print(dwi_names)
     if len(dwi_names)>3:
         print(img_name,'dwi num', len(dwi_names))
