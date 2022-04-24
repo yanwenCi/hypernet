@@ -108,7 +108,7 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 
 # random hyperparameter generator
 
-hyperps = np.load('hyperp_train.npy')
+hyperps = np.load('hyperp_train_nega.npy')
 if args.nega_bias==True:
     hyperps = [i for i in hyperps if i[3]<0]
 def random_hyperparam(hyper_num):
@@ -265,7 +265,7 @@ with tf.device(device):
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
         #image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=300)
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
