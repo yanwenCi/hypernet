@@ -65,7 +65,7 @@ parser.add_argument('--load-weights', help='optional weights file to initialize 
 parser.add_argument('--initial-epoch', type=int, default=0,
                     help='initial epoch number (default: 0)')
 parser.add_argument('--lr', type=float, default=1e-6, help='learning rate (default: 1e-4)')
-
+parser.add_argument('--patience', type=int, default=100)
 # network architecture parameters
 parser.add_argument('--enc', type=int, nargs='+',
                     help='list of unet encoder filters (default: 16 32 32 32)')
@@ -265,7 +265,7 @@ with tf.device(device):
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
         #image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=300)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=args.patience)
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False

@@ -7,7 +7,7 @@ f=open('run_combiner2.sh','w')
 f.write('#!/bin/bash\n')
 cmd=[]
 for j in range(len(data)):
-    i=np.random.randint(len(data))
+    i=np.random.radint(len(data))
     a,b,c,d=data[i]
     if d>0:
         continue
