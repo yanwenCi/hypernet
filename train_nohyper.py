@@ -1,25 +1,3 @@
-"""
-Example script for training a HyperMorph model to tune the
-regularization weight hyperparameter.
-
-If you use this code, please cite the following:
-
-    A Hoopes, M Hoffmann, B Fischl, J Guttag, AV Dalca. 
-    HyperMorph: Amortized Hyperparameter Learning for Image Registration
-    IPMI: Information Processing in Medical Imaging. 2021. https://arxiv.org/abs/2101.01035
-
-Copyright 2020 Andrew Hoopes
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
-compliance with the License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is
-distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-implied. See the License for the specific language governing permissions and limitations under the
-License.
-"""
 
 import os
 import random
@@ -78,7 +56,9 @@ parser.add_argument('--int-downsize', type=int, default=2,
 # loss hyperparameters
 parser.add_argument('--mod', type=int, default=None)
 parser.add_argument('--hyper_num', type=int, default=3)
-
+parser.add_argument('--hyper-val', default=None)
+parser.add_argument('--nega_bias', type=bool, default=True)
+parser.add_argument('--patience', type=int, default=100)
 
 parser.add_argument('--image-loss', default='dice',
                     help='image reconstruction loss - can be mse or ncc (default: mse)')
@@ -106,17 +86,23 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 
 # random hyperparameter generator
 
-hyperps = np.load('hyperp.npy')
 
-def random_hyperparam(hyper_num):
+hyperps = np.load('hyperp_train_nega.npy')
+if args.nega_bias==True:
+    hyperps = [i for i in hyperps if i[3]<0]
+    def random_hyperparam(hyper_num):
+        if args.hyper_val is None:
+            if args.mod == 3:
+                hyper_val = np.random.uniform(low=-1, high=1, size=(hyper_num,))*20.0
+            elif args.mod == 2:
+                hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
+            else:
+                hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
+        else:
+            hyper_val =np.asarray( list(map(float,args.hyper_val.split(',')[1:])))      
+        return hyper_val
 
-    if args.mod == 2:
-        #hyper_val = hyperps[50]
-        hyper_val = np.random.uniform(low=0, high=1, size=(hyper_num,))
-        #hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
-    else:
-        hyper_val =np.random.dirichlet(np.ones(hyper_num), size=1)[0]
-    return hyper_val
+
 
 def hyp_generator():
     while True:
@@ -224,10 +210,7 @@ with tf.device(device):
     #hyper_val=model.references.hyper_val
     if args.image_loss == 'dice':
         #image_loss_func = vxm.losses.HyperBinaryDiceLoss(hyper_val, args.mod).loss
-        image_loss1 = vxm.losses.HyperBinaryDiceLoss(0).loss
-        image_loss2 = vxm.losses.HyperBinaryDiceLoss(0).loss
-        image_loss3 = vxm.losses.HyperBinaryDiceLoss(0).loss
-        image_loss_func = vxm.losses.HyperBinaryDiceLoss(args.mod).loss
+        image_loss_func = vxm.losses.BinaryDiceLoss().loss
         ce_loss = tf.keras.losses.BinaryCrossentropy(
             from_logits=True, label_smoothing=0, name='binary_crossentropy'
                 )
@@ -240,7 +223,7 @@ with tf.device(device):
     # prepare loss functions and compile model
 
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
-        image_loss1, image_loss2, image_loss3,
+    #    image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
 
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)

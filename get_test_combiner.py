@@ -19,7 +19,7 @@ for j in range(len(data)):
 #            continue
 #        e=max(files)
 #        print(e)
-        cmd.append('python train_hypermorph.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_cross1/{}  --mod 2  --gpu 2 --epoch 20 --patience 3  --batch-size 4 --steps-per-epoch 300  --hyper-val ,{:>6f},{:>6f},{:>6f},{:>6f}\n'.format(i,a,b,c,d))
+        cmd.append('python train_nohyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_cross1/{}  --mod 2  --gpu 1 --epoch 20 --patience 3  --batch-size 4 --steps-per-epoch 300  --hyper-val ,{:>6f},{:>6f},{:>6f},{:>6f}\n'.format(i,a,b,c,d))
         #cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_{}_cross1  --mod 2 --load-weights {}  --gpu 0 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/combiner2/{} >checkpoints/combiner2_{}_cross1/test_log\n'.format(i,e,a,b,c,d,i,i))
 
 f.writelines(cmd)
