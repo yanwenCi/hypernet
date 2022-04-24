@@ -95,7 +95,7 @@ gpu_avilable = tf.config.experimental.list_physical_devices('GPU')
 print(gpu_avilable)
 
 logdir = args.model_dir+"/logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+tensorboard_callback = [tf.keras.callbacks.TensorBoard(log_dir=logdir),tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)]
 
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
@@ -111,7 +111,6 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 hyperps = np.load('hyperp_train.npy')
 if args.nega_bias==True:
     hyperps = [i for i in hyperps if i[3]<0]
-    print(hyperps)
 def random_hyperparam(hyper_num):
     if args.hyper_val is None:
         if args.mod == 3:
@@ -266,7 +265,7 @@ with tf.device(device):
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
         #image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
-
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
@@ -274,7 +273,7 @@ with tf.device(device):
     training_history = model.fit(hyp_generator(),initial_epoch=args.initial_epoch,
                         epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
-                        callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
+                        callbacks=[save_callback, logger, tensorboard_callback, early_stopping], verbose=1,
                         validation_steps=validation_steps,
                         validation_data=hyp_generator_valid())
 
