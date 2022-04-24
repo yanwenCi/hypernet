@@ -75,6 +75,7 @@ parser.add_argument('--int-steps', type=int, default=7,
                     help='number of integration steps (default: 7)')
 parser.add_argument('--int-downsize', type=int, default=2,
                     help='flow downsample factor for integration (default: 2)')
+parser.add_argument('--grid-search', type=bool, default=True)
 
 # loss hyperparameters
 parser.add_argument('--mod', type=int, default=None)
@@ -113,8 +114,12 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
 # scan-to-scan generator
+if args.grid_search:
+    __phase='validation'
+else:
+    __phase='test'
 base_generator = vxm.generators.multi_mods_gen(
-    args.img_list, phase='validation', batch_size=args.batch_size, test= True, add_feat_axis=add_feat_axis)
+    args.img_list, phase=__phase, batch_size=args.batch_size, test= True, add_feat_axis=add_feat_axis)
 # random hyperparameter generator
 
 hyperps = np.load('hyperp_test.npy')
