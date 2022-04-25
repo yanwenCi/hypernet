@@ -1432,8 +1432,8 @@ class UnetDense(ne.modelio.LoadableModel):
         #    weight_sum_layer = weight_sum(dim=ndims)
         #    outputs = weight_sum_layer(outputs, hyp_input)  # hyp_input[0,...])
         weight_sum_layer = weight_sum(dim=ndims)
-        hyp_ = tf.constant([[18.17,18.17,-0.2,-8.53]])
-        outputs = weight_sum_layer(outputs, hyp_)
+        #hyp_ = tf.constant([[18.17,18.17,-0.2,-8.53]])
+        outputs = weight_sum_layer(outputs, hyp_input)
 
         if activate:
             outputs = tf.keras.activations.sigmoid(outputs)
@@ -1448,7 +1448,7 @@ class UnetDense(ne.modelio.LoadableModel):
         self.references = ne.modelio.LoadableModel.ReferenceContainer()
         self.references.unet_model = unet_model1
         self.references.y_source = outputs
-        self.references.hyper_val=hyp_[0]
+        self.references.hyper_val=hyp_input[0]
 
 class UnetSingle(ne.modelio.LoadableModel):
     """
