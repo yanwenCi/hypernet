@@ -72,7 +72,7 @@ gpu_avilable = tf.config.experimental.list_physical_devices('GPU')
 print(gpu_avilable)
 
 logdir = args.model_dir+"/logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
-
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
     # scan-to-scan generator
