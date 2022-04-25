@@ -225,7 +225,7 @@ with tf.device(device):
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
     #    image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
-
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss",patience=args.patience,verbose=0,mode="auto",baseline=None,restore_best_weights=False )
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False
@@ -233,7 +233,7 @@ with tf.device(device):
     training_history = model.fit(hyp_generator(),initial_epoch=args.initial_epoch,
                         epochs=args.epochs,
                         steps_per_epoch=args.steps_per_epoch,
-                        callbacks=[save_callback, logger, tensorboard_callback], verbose=1,
+                        callbacks=[save_callback, logger, early_stopping, tensorboard_callback], verbose=1,
                         validation_steps=validation_steps,
                         validation_data=hyp_generator_valid())
 
