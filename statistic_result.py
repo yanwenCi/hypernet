@@ -20,9 +20,10 @@ for i in range(len(data)):
     hyp=data[i]
     if hyp[-1]>1:
         continue
-    if not os.path.exists(os.path.join('checkpoints',f,'test{}_log'.format(i))):
+    path_log=os.path.join('checkpoints',f,'{}/test_log'.format(i))
+    if not os.path.exists( path_log):
         continue
-    log=open(os.path.join('checkpoints',f,'test{}_log'.format(i)),'r')
+    log=open(path_log,'r')
     log_=log.readlines()
     log_line=log_[1].split(' ')
     log_line=[i.replace('[','').strip(',') for i in log_line]

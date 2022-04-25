@@ -1448,7 +1448,7 @@ class UnetDense(ne.modelio.LoadableModel):
         self.references = ne.modelio.LoadableModel.ReferenceContainer()
         self.references.unet_model = unet_model1
         self.references.y_source = outputs
-
+        self.references.hyper_val=hyp_[0]
 
 class UnetSingle(ne.modelio.LoadableModel):
     """

@@ -76,6 +76,7 @@ parser.add_argument('--int-steps', type=int, default=7,
 parser.add_argument('--int-downsize', type=int, default=2,
                     help='flow downsample factor for integration (default: 2)')
 parser.add_argument('--grid-search', type=bool, default=True)
+parser.add_argument('--net', default='hyper', choices=['hyper','combiner'])
 
 # loss hyperparameters
 parser.add_argument('--mod', type=int, default=None)
@@ -161,7 +162,17 @@ if not os.path.exists(save_file):
 results=[]
 with tf.device(device):
     # build the model
-    model = vxm.networks.HyperUnetDense(
+    if args.net=='combiner':
+        model = vxm.networks.UnetDense(
+                     inshape=inshape,
+                     nb_unet_features=[enc_nf, dec_nf],
+                     src_feats=nfeats,
+                     trg_feats=nfeats,
+                     unet_half_res=False,
+                    activate=args.activation,
+                    nb_hyp_params=args.hyper_num)
+    elif args.net=='hyper':
+        model = vxm.networks.HyperUnetDense(
         inshape=inshape,
         nb_unet_features=[enc_nf, dec_nf],
         src_feats=nfeats,
@@ -169,8 +180,8 @@ with tf.device(device):
         unet_half_res=False,
         nb_hyp_params=args.hyper_num,
         activation=args.activation)
-    #print(model.summary())
-    # load initial weights (if provided)
+#    #print(model.summary())
+#    # load initial weights (if provided)
 
     model.load_weights(os.path.join(model_dir, '{:04d}.h5'.format(int(args.load_weights))))
     #print('loading weights from {:04d}.h5'.format(int(args.load_weights)))
