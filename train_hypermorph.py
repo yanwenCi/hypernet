@@ -1,26 +1,3 @@
-"""
-Example script for training a HyperMorph model to tune the
-regularization weight hyperparameter.
-
-If you use this code, please cite the following:
-
-    A Hoopes, M Hoffmann, B Fischl, J Guttag, AV Dalca. 
-    HyperMorph: Amortized Hyperparameter Learning for Image Registration
-    IPMI: Information Processing in Medical Imaging. 2021. https://arxiv.org/abs/2101.01035
-
-Copyright 2020 Andrew Hoopes
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
-compliance with the License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is
-distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-implied. See the License for the specific language governing permissions and limitations under the
-License.
-"""
-
 import os
 import random
 import argparse
@@ -265,7 +242,7 @@ with tf.device(device):
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
         #image_loss1, image_loss2, image_loss3,
                                                                                    image_loss_func])
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=args.patience)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=args.patience)
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
         os.path.join(model_dir,'LOGGER.TXT'), separator=',', append=False

@@ -13,7 +13,7 @@ for j in range(len(data)):
     else:
         print(i, np.round(a,4))
         #cmd.append('python train_hypermorph.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_cross1/{}  --mod 2  --gpu 2 --epoch 20  --batch-size 4  --steps-per-epoch 300  --hyper-val ,{:>6f},{:>6f},{:>6f},{:>6f}\n'.format(i,a,b,c,d))
-        cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/hyper2_cross1  --mod 2 --load-weights 136  --gpu 1 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/hyper2_cross1/{} >checkpoints/hyper2_cross1/test{}_log\n'.format(a,b,c,d,i,i))
+        cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/hyper2_cross1  --mod 2 --load-weights 143  --gpu 1 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/hyper2_cross1/{} >checkpoints/hyper2_cross1/test{}_log\n'.format(a,b,c,d,i,i))
 
 f.writelines(cmd)
 f.close()

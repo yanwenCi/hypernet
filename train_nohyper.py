@@ -90,17 +90,17 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 hyperps = np.load('hyperp_train_nega.npy')
 if args.nega_bias==True:
     hyperps = [i for i in hyperps if i[3]<0]
-    def random_hyperparam(hyper_num):
-        if args.hyper_val is None:
-            if args.mod == 3:
-                hyper_val = np.random.uniform(low=-1, high=1, size=(hyper_num,))*20.0
-            elif args.mod == 2:
-                hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
-            else:
-                hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
+def random_hyperparam(hyper_num):
+    if args.hyper_val is None:
+        if args.mod == 3:
+            hyper_val = np.random.uniform(low=-1, high=1, size=(hyper_num,))*20.0
+        elif args.mod == 2:
+            hyper_val = hyperps[np.random.randint(0, len(hyperps)*args.oversample_rate)]
         else:
-            hyper_val =np.asarray( list(map(float,args.hyper_val.split(',')[1:])))      
-        return hyper_val
+            hyper_val = np.random.dirichlet(np.ones(hyper_num), size=1)[0]
+    else:
+        hyper_val =np.asarray( list(map(float,args.hyper_val.split(',')[1:])))      
+    return hyper_val
 
 
 
