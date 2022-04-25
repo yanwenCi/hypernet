@@ -20,7 +20,12 @@ for i in range(len(data)):
     hyp=data[i]
     if hyp[-1]>1:
         continue
-    path_log=os.path.join('checkpoints',f,'{}/test_log'.format(i))
+    
+    y=Y[i].tolist()
+    y=y[4:]+y[0:4]
+    no=[str(p) for p in y]
+    no=int(''.join(no),2)
+    path_log=os.path.join('checkpoints',f,'{}/test_log'.format(no))
     if not os.path.exists( path_log):
         continue
     log=open(path_log,'r')
@@ -42,10 +47,6 @@ for i in range(len(data)):
     log_lesion=list(filter(None, log_lesion))[1:7]
     log_lesion=[float(k.strip().strip('[').strip(']')) for k in log_lesion]
 
-    y=Y[i].tolist()
-    y=y[4:]+y[0:4]
-    no=[str(p) for p in y]
-    no=int(''.join(no),2)
     print(log_line,y,no)
     new.append([no]+y+hyp.tolist()+log_line+log_std+log_lesion)
     
