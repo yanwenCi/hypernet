@@ -1,27 +1,58 @@
-import numpy as np
 import os
+import numpy as np
+import csv
 
-data=np.load('hyperp_test.npy')
-print(data.shape)
-f=open('run_combiner2.sh','w')
-f.write('#!/bin/bash\n')
-cmd=[]
-for j in range(len(data)):
-    i=np.random.radint(len(data))
-    a,b,c,d=data[i]
-    if d>0:
+import argparse
+
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('dir',  type=str,
+                    help='an integer for the accumulator')
+parser.add_argument('npy', type=str)
+parser.add_argument('Y', type=str)
+args = parser.parse_args()
+npy_file=args.npy
+
+f=args.dir
+data=np.load(npy_file)
+Y=np.load(args.Y)
+new=[]
+for i in range(len(data)):
+    hyp=data[i]
+    if hyp[-1]>1:
         continue
-    else:
-        print(i, np.round(a,4))
-#        files=os.listdir('checkpoints/combiner2_cross1/{}'.format(i))
-#        files=[int(i.split('.')[0]) for i in files if '.h5' in i]
-#        if len(files)==0:
-#            continue
-#        e=max(files)
-#        print(e)
-        cmd.append('python train_hypermorph.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_cross1/{}  --mod 2  --gpu 2 --epoch 20 --patience 3  --batch-size 4 --steps-per-epoch 300  --hyper-val ,{:>6f},{:>6f},{:>6f},{:>6f}\n'.format(i,a,b,c,d))
-        #cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_{}_cross1  --mod 2 --load-weights {}  --gpu 0 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/combiner2/{} >checkpoints/combiner2_{}_cross1/test_log\n'.format(i,e,a,b,c,d,i,i))
-
-f.writelines(cmd)
-f.close()
     
+    y=Y[i].tolist()
+    y=y[4:]+y[0:4]
+    no=[str(p) for p in y]
+    no=int(''.join(no),2)
+    path_log=os.path.join('checkpoints',f,'test{}_log'.format(no)) # for multi models
+    #path_log=os.path.join('checkpoints',f,'{}/test_log'.format(no)) #for single model
+    if not os.path.exists( path_log):
+        continue
+    log=open(path_log,'r')
+    log_=log.readlines()
+    log_line=log_[1].split(' ')
+    log_line=[i.replace('[','').strip(',') for i in log_line]
+    log_line=list(filter(None, log_line))[1:7]
+    log_line=[float(k.strip().strip('[').strip(']')) for k in log_line]
+#std   
+    log_std=log_[0]
+    log_std=log_std.split(' ')
+    log_std=[i.replace('[','').strip(',') for i in log_std]
+    log_std=list(filter(None, log_std))[1:7]
+    log_std=[float(k.strip().strip('[').strip(']')) for k in log_std]
+#lesion
+    log_lesion=log_[2]
+    log_lesion=log_lesion.split(' ')
+    log_lesion=[i.replace('[','').strip(',') for i in log_lesion]
+    log_lesion=list(filter(None, log_lesion))[1:7]
+    log_lesion=[float(k.strip().strip('[').strip(']')) for k in log_lesion]
+
+    print([no]+y+hyp.tolist()+log_line+log_std+log_lesion)
+    new.append([no]+y+hyp.tolist()+log_line+log_std+log_lesion)
+    
+
+with open(os.path.join('checkpoints',f,'results_log.csv'),'w') as file:
+    writer=csv.writer(file)
+    writer.writerows(new)
+
