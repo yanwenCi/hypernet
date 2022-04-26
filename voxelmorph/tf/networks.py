@@ -1441,14 +1441,14 @@ class UnetDense(ne.modelio.LoadableModel):
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
 
         super().__init__(name=name, inputs=[source1, source2, source3, hyp_input], outputs=[
-#          output_list[0],output_list[1], output_list[2],
-                                                                                            outputs])
+            outputs,
+            output_list[0],output_list[1], output_list[2]])
 
         # cache pointers to layers and tensors for future reference
         self.references = ne.modelio.LoadableModel.ReferenceContainer()
         self.references.unet_model = unet_model1
         self.references.y_source = outputs
-        self.references.hyper_val=hyp_input[0]
+        self.references.hyper_val=hyp_input
 
 class UnetSingle(ne.modelio.LoadableModel):
     """

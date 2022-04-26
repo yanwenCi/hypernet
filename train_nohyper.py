@@ -210,7 +210,10 @@ with tf.device(device):
     #hyper_val=model.references.hyper_val
     if args.image_loss == 'dice':
         #image_loss_func = vxm.losses.HyperBinaryDiceLoss(hyper_val, args.mod).loss
-        image_loss_func = vxm.losses.HyperLoss().loss#BinaryDiceLoss().loss
+        image_loss_func = vxm.losses.BinaryDiceLoss().loss
+        image_loss1 = tf.keras.losses.BinaryCrossentropy(from_logits=False, name='t2w')
+        image_loss2 = tf.keras.losses.BinaryCrossentropy(from_logits=False, name='adc')
+        image_loss3 = tf.keras.losses.BinaryCrossentropy(from_logits=False, name='dwi')
         ce_loss = tf.keras.losses.BinaryCrossentropy(
             from_logits=True, label_smoothing=0, name='binary_crossentropy'
                 )
@@ -222,9 +225,9 @@ with tf.device(device):
 
     # prepare loss functions and compile model
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
-    #    image_loss1, image_loss2, image_loss3,
-                                                                                   image_loss_func])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss_func
+        ,image_loss1, image_loss2, image_loss3,
+                                                                                   ])
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss",patience=args.patience,verbose=0,mode="auto",baseline=None,restore_best_weights=False )
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(

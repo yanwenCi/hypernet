@@ -314,12 +314,12 @@ def multi_mods_gen(vol_names,  batch_size=1, test=False,  **kwargs):
         if test:
             scan1, scan2, scan3, msk, zone, name = next(gen)
             invols = [scan1, scan2, scan3]
-            outvols = [msk]#, msk, msk, msk]
+            outvols = [msk, msk, msk, msk]
             yield (invols, outvols, zone, name)
         else:
             scan1, scan2, scan3, msk= next(gen)
             invols = [scan1, scan2,  scan3]
-            outvols =[msk]#, msk, msk, msk]
+            outvols =[msk,  msk, msk, msk]
             #outvols = [msk]
             yield (invols, outvols)
 
