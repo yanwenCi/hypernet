@@ -237,10 +237,14 @@ with tf.device(device):
         raise ValueError('Image loss should be "mse" or "ncc", but found "%s"' % args.image_loss)
 
     # prepare loss functions and compile model
-
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[
-        #image_loss1, image_loss2, image_loss3,
-                                                                                   image_loss_func])
+    if args.mod==2:
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss_func
+        #,image_loss1, image_loss2, image_loss3,
+                                                                                   ])
+    elif args.mod==0:
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss_func
+        ,image_loss1, image_loss2, image_loss3,
+        ])
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=args.patience)
     save_callback = tf.keras.callbacks.ModelCheckpoint(save_filename, save_freq='epoch', save_best_only=True)
     logger = tf.keras.callbacks.CSVLogger(
