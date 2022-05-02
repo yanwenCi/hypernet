@@ -87,7 +87,7 @@ base_generator_valid = vxm.generators.multi_mods_gen(
 # random hyperparameter generator
 
 
-hyperps = np.load('hyperp_train_nega.npy')
+hyperps = np.load('hyperp_test.npy')
 if args.nega_bias==True:
     hyperps = [i for i in hyperps if i[3]<0]
 def random_hyperparam(hyper_num):

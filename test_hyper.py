@@ -116,7 +116,7 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 add_feat_axis = not args.multichannel
 # scan-to-scan generator
 if args.grid_search:
-    __phase='validation'
+    __phase='valid'
 else:
     __phase='test'
 base_generator = vxm.generators.multi_mods_gen(
@@ -225,13 +225,13 @@ with tf.device(device):
        # dist evaluation
         surf_dist=sd.compute_surface_distances(np.array(predicted.squeeze().round(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
         hausd_dist=sd.compute_robust_hausdorff(surf_dist,95)
-        hausd_dist=min(50 ,hausd_dist)
+        hausd_dist=min(40 ,hausd_dist)
         surf_dist_tz=sd.compute_surface_distances(np.array(t_predict.squeeze(), dtype=bool), np.array(t_lesion.squeeze(), dtype=bool), (1,1,1))
         hausd_dist_tz=sd.compute_robust_hausdorff(surf_dist_tz,95)
-        hausd_dist_tz=min(50,hausd_dist_tz)
+        hausd_dist_tz=min(40,hausd_dist_tz)
         surf_dist_pz=sd.compute_surface_distances(np.array(p_predict.squeeze(), dtype=bool), np.array(p_lesion.squeeze(), dtype=bool), (1,1,1))
         hausd_dist_pz=sd.compute_robust_hausdorff(surf_dist_pz,95)
-        hausd_dist_pz=min(50,hausd_dist_pz)
+        hausd_dist_pz=min(40,hausd_dist_pz)
         
         # lesion level
         thresh=[0.25]
