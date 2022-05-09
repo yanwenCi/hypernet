@@ -25,9 +25,11 @@ for i in range(len(data)):
         if len(files)==0:
             continue
         e=max(files)
+        if e==20:
+            e=files[-2]
         print(e)
         #cmd.append('python train_nohyper.py --img-list data/data_lesion_cross1/ --lr 1e-4  --model-dir checkpoints/combiner2_cross1/{}  --mod 2  --gpu 1 --epoch 20 --patience 3  --batch-size 4 --steps-per-epoch 300  --hyper-val ,{:>6f},{:>6f},{:>6f},{:>6f}\n'.format(no,a,b,c,d))
-        cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_cross1/{}  --mod 2 --load-weights {}  --net combiner  --gpu 2 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/combiner2_cross1/{} >checkpoints/combiner2_cross1/{}/test_log\n'.format(no,e,a,b,c,d,no,no))
+        cmd.append('python test_hyper.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_cross1/{}  --mod 2 --load-weights {}  --net combiner  --gpu 0 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/combiner2_cross1/{} >checkpoints/combiner2_cross1/{}/test_log\n'.format(no,e,a,b,c,d,no,no))
 
 f.writelines(cmd)
 f.close()

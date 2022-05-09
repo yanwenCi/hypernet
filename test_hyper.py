@@ -253,7 +253,7 @@ with tf.device(device):
         lesion_all.append([gt_lesion, pred_lesion, gt_lesion_tz,pred_lesion_tz,gt_lesion_pz,pred_lesion_pz])
         lesion_tp_num.append([number_tp_gt,number_tp_pd, number_tp_gt_tz,number_tp_pd_tz,number_tp_gt_pz,number_tp_pd_pz])
         #print('  ',name[0], accuracy, accuracy_t, accuracy_p)
-
+        #print(' ' ,name[0], gt_lesion_tz,pred_lesion_tz,gt_lesion_pz,pred_lesion_pz)
         if i%10==0:
             seg_result = predicted.squeeze()
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))

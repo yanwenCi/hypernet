@@ -184,7 +184,7 @@ with tf.device(device):
     #hyper_val=model.references.hyper_val
     if args.image_loss == 'dice':
         #image_loss_func = vxm.losses.HyperBinaryDiceLoss(hyper_val, args.mod).loss
-        image_loss_func = vxm.losses.HyperBinaryDiceLoss(0).loss
+        image_loss_func = vxm.losses.HyperLoss().loss
         ce_loss = tf.keras.losses.BinaryCrossentropy(
             from_logits=True, label_smoothing=0, name='binary_crossentropy'
                 )

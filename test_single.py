@@ -149,8 +149,8 @@ with tf.device(device):
     number_p, number_t=0,0
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
-        if i>20:
-            break
+#        if i>20:
+#            break
         inputs, outputs, zone, name = data
         predicted = model.predict(inputs)[-1]
         # predicted = (predicted-predicted.min())/(predicted.max()-predicted.min())
@@ -216,8 +216,9 @@ with tf.device(device):
                                       os.path.join(save_file, '%s_dice_%.4f_pred.nii.gz' % (name[0].split('.')[0], accuracy)))
             print(inputs[0][0,...,0].shape)
             vxm.py.utils.save_volfile(inputs[0][0,...,0].squeeze(), os.path.join(save_file, '%s_dice_%.4f_t2w.nii.gz' % (name[0].split('.')[0], accuracy)))
-            #vxm.py.utils.save_volfile(inputs[0][0,...,1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
-            #vxm.py.utils.save_volfile(inputs[0][0,...,2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy)))
+            if args.type==3:
+                vxm.py.utils.save_volfile(inputs[0][0,...,1].squeeze(), os.path.join(save_file, '%s_dice_%.4f_dwi.nii.gz' % (name[0].split('.')[0], accuracy)))
+                vxm.py.utils.save_volfile(inputs[0][0,...,2].squeeze(), os.path.join(save_file, '%s_dice_%.4f_adc.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice_%.4f.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(p_zone.squeeze(), os.path.join(save_file, '%s_dice_%.4f_pz.nii.gz' % (name[0].split('.')[0], accuracy)))
             vxm.py.utils.save_volfile(t_zone.squeeze(), os.path.join(save_file, '%s_dice_%.4f_tz.nii.gz' % (name[0].split('.')[0], accuracy)))

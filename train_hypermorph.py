@@ -239,7 +239,7 @@ with tf.device(device):
     # prepare loss functions and compile model
     if args.mod==2:
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss_func
-        #,image_loss1, image_loss2, image_loss3,
+#        ,image_loss1, image_loss2, image_loss3,
                                                                                    ])
     elif args.mod==0:
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr), loss=[image_loss_func
