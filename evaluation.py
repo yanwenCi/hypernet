@@ -109,12 +109,13 @@ def metrics(pred, target,t_zone,p_zone):
     dice_score=vxm.losses.Dice(with_logits=False)
     for p in range(1,28):
         pred_seg=copy.deepcopy(pred)
+        thre=p
         if p/10==1:
-            thre=thre-10
+            thre=p-10
             pred_seg=t_zone*pred_seg
             target=t_zone*target
         elif p/10==2:
-            thre=thre-10
+            thre=-10
             pred_seg=p_zone*pred_seg
             target=p_zone*target
         thre=thre/10
