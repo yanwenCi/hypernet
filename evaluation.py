@@ -22,7 +22,7 @@ def main(args):
 
     #path='/data0/yw/jupyter_folder/Attention-Gated-Network/experiment_unet_3mod80'
 
-    t2w_list = glob.glob(path + '/*t2w.nii.gz')
+    t2w_list = glob.glob(path + '/*t2w.nii.gz')[:3]
     adc_list = [i.replace('t2w.nii.gz', 'adc.nii.gz') for i in t2w_list]
     dwi_list = [i.replace('t2w.nii.gz', 'dwi.nii.gz') for i in t2w_list]
     lab_list = [i.replace('t2w.nii.gz', 'label.nii.gz') for i in t2w_list]
@@ -107,18 +107,15 @@ def metrics(pred, target,t_zone,p_zone):
     pred_lesion=np.zeros(iters)
     gt_lesion=np.zeros(iters)
     dice_score=vxm.losses.Dice(with_logits=False)
+    pred_seg=copy.deepcopy(pred)
     for p in range(1,28):
-        pred_seg=copy.deepcopy(pred)
-        thre=p
-        if p/10==1:
-            thre=p-10
+        if p/9==1:
             pred_seg=t_zone*pred_seg
             target=t_zone*target
-        elif p/10==2:
-            thre=-10
+        elif p/9==2:
             pred_seg=p_zone*pred_seg
             target=p_zone*target
-        thre=thre/10
+        thre=p%9
         pred_seg[pred_seg>thre]=1
         pred_seg[pred_seg<=thre]=0
 
