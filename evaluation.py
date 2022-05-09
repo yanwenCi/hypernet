@@ -107,10 +107,9 @@ def metrics(pred, target,t_zone,p_zone):
     pred_lesion=np.zeros(iters)
     gt_lesion=np.zeros(iters)
     dice_score=vxm.losses.Dice(with_logits=False)
-    for p in range(1,30):
-        if p/10==0:
-            pred_seg=copy.deepcopy(pred)
-        elif p/10==1:
+    for p in range(1,28):
+        pred_seg=copy.deepcopy(pred)
+        if p/10==1:
             pred_seg=t_zone*pred_seg
             target=t_zone*target
         elif p/10==2:
