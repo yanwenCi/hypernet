@@ -38,11 +38,17 @@ def main(args):
           
             lab = nib.load(path_lab).get_fdata()
             pre = nib.load(path_pre).get_fdata()
-            p_zone=nib.load(path_pz).get_fdata()
-            t_zone = nib.load(path_tz).get_fdata()
+            if args.zone=='pz':
+                zone=nib.load(path_pz).get_fdata()
+                lab=zone*lab 
+                pre=zone*pre
+            elif args.zone=='tz':
+                zone = nib.load(path_tz).get_fdata()
+                lab=zone*lab
+                pre=zone*pre
 
-            hausd_dist, dice_vals, precision, recal,number_tplesion_gt, number_tplesion_pd, od_acc_tp, od_acc_fp, gt_number, pred_number=metrics(pre, lab, t_zone, p_zone)
-            dice_mean.append([path_pre.split('/')[-1]]+hausd_dist.tolist() + dice_vals.tolist() + precision.tolist() + recal.tolist())
+            #hausd_dist, dice_vals, precision, recal,number_tplesion_gt, number_tplesion_pd, od_acc_tp, od_acc_fp, gt_number, pred_number=metrics(pre, lab)
+            #dice_mean.append([path_pre.split('/')[-1]]+hausd_dist.tolist() + dice_vals.tolist() + precision.tolist() + recal.tolist())
             number_of_pg.append([path_pre.split('/')[-1]]+number_tplesion_gt.tolist() + number_tplesion_pd.tolist())
             number_of_od.append([path_pre.split('/')[-1]]+od_acc_tp.tolist()+ od_acc_fp.tolist())
             number_of_pred.append([path_pre.split('/')[-1]]+pred_number.tolist()+[gt_number])
@@ -58,13 +64,13 @@ def main(args):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
         print(save_path)
-    with open(join(save_path, 'test_loss_log.csv'), 'w+') as f_csv:
-        write = csv.writer(f_csv)
-        write.writerows(dice_mean)
+    #with open(join(save_path, 'test_loss_log.csv'), 'w+') as f_csv:
+    #    write = csv.writer(f_csv)
+    #    write.writerows(dice_mean)
 
-    with open(join(save_path, 'object.csv'), 'w+') as f_csv:
-        write = csv.writer(f_csv)
-        write.writerows(number_of_od)
+    #with open(join(save_path, 'object.csv'), 'w+') as f_csv:
+    #    write = csv.writer(f_csv)
+    #    write.writerows(number_of_od)
     with open(join(save_path, 'PR.csv'), 'w+') as f_csv:
         write = csv.writer(f_csv)
         write.writerows(number_of_pg)
@@ -73,8 +79,8 @@ def main(args):
         write.writerows(number_of_pred)
 
     f_csv.close()
-    print(np.mean(np.array(dice_mean)[:,1:].astype(np.float),axis=0))
-    print('od', od_tp / (od_tp + od_fp), od_tp / gt_acc_lesion)
+    #print(np.mean(np.array(dice_mean)[:,1:].astype(np.float),axis=0))
+    #print('od', od_tp / (od_tp + od_fp), od_tp / gt_acc_lesion)
     print(gt_acc_lesion)
     print('gtpd', gt_tp/gt_acc_lesion, pd_tp/pred_acc)
 
@@ -92,30 +98,22 @@ def removesamll(contours, thres=0.5):
     print('    Founding {} contours'.format(len(cv_contours)))
     return cv_contours
 
-def metrics(pred, target,t_zone,p_zone):
-    iters=9*3
-    od_acc_tp=np.zeros(iters)
-    od_acc_fp=np.zeros(iters)
+def metrics(pred, target):
+    od_acc_tp=np.zeros(9)
+    od_acc_fp=np.zeros(9)
     od_gt_number=0
-    pred_number=np.zeros(iters)
-    hausd_dist=np.zeros(iters)
-    dice_vals=np.zeros(iters)
-    precision=np.zeros(iters)
-    recal=np.zeros(iters)
-    number_tp_pd=np.zeros(iters)
-    number_tp_gt=np.zeros(iters)
-    pred_lesion=np.zeros(iters)
-    gt_lesion=np.zeros(iters)
+    pred_number=np.zeros(9)
+    hausd_dist=np.zeros(9)
+    dice_vals=np.zeros(9)
+    precision=np.zeros(9)
+    recal=np.zeros(9)
+    number_tp_pd=np.zeros(9)
+    number_tp_gt=np.zeros(9)
+    pred_lesion=np.zeros(9)
+    gt_lesion=np.zeros(9)
     dice_score=vxm.losses.Dice(with_logits=False)
-    for p in range(1,30):
-        if p/10==0:
-            pred_seg=copy.deepcopy(pred)
-        elif p/10==1:
-            pred_seg=t_zone*pred_seg
-            target=t_zone*target
-        elif p/10==2:
-            pred_seg=p_zone*pred_seg
-            target=p_zone*target
+    for p in range(1,10):
+        pred_seg=copy.deepcopy(pred)
         thre=p/10
         pred_seg[pred_seg>thre]=1
         pred_seg[pred_seg<=thre]=0
