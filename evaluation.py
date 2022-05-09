@@ -31,7 +31,7 @@ def main(args):
     tz_list =  [i.replace('t2w.nii.gz', 'tz.nii.gz') for i in t2w_list]
     for path_t2w, path_adc, path_dwi, path_lab, path_pre,path_tz,path_pz in zip(t2w_list, adc_list, dwi_list, lab_list, pre_list, tz_list,pz_list):
         if os.path.exists(path_adc) and os.path.exists(path_dwi) and os.path.exists(path_lab) and os.path.exists( path_pre):
-            print('Processing {}...'.format(os.path.split(path_pre)[-1]))
+            #print('Processing {}...'.format(os.path.split(path_pre)[-1]))
             # t2w = nib.load(path_t2w).get_fdata()
             # adc = nib.load(path_adc).get_fdata()
             # dwi = nib.load(path_dwi).get_fdata()
@@ -73,7 +73,7 @@ def main(args):
         write.writerows(number_of_pred)
 
     f_csv.close()
-    print(np.mean(np.array(dice_mean)[:,1:].astype(np.float),axis=0))
+    print(np.nanmean(np.array(dice_mean)[:,1:].astype(np.float),axis=0))
     print('od', od_tp / (od_tp + od_fp), od_tp / gt_acc_lesion)
     print(gt_acc_lesion)
     print('gtpd', gt_tp/gt_acc_lesion, pd_tp/pred_acc)
@@ -130,7 +130,7 @@ def metrics(pred, target,t_zone,p_zone):
         recal[p-1]=rec[-1]
 
         #calculate object detection metric
-        od_iou, number_lesion_tgt, number_lesion__pred, tp_num, fp_num=OD_PR(target, pred_seg, 0.25)
+        od_iou, number_lesion_tgt, number_lesion_pred, tp_num, fp_num=OD_PR(target, pred_seg, 0.25)
         od_acc_tp[p-1]=tp_num
         od_acc_fp[p-1]=fp_num
         thre=[0.25]
