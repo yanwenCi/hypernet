@@ -22,7 +22,7 @@ def main(args):
 
     #path='/data0/yw/jupyter_folder/Attention-Gated-Network/experiment_unet_3mod80'
 
-    t2w_list = glob.glob(path + '/*t2w.nii.gz')[:3]
+    t2w_list = glob.glob(path + '/*t2w.nii.gz')
     adc_list = [i.replace('t2w.nii.gz', 'adc.nii.gz') for i in t2w_list]
     dwi_list = [i.replace('t2w.nii.gz', 'dwi.nii.gz') for i in t2w_list]
     lab_list = [i.replace('t2w.nii.gz', 'label.nii.gz') for i in t2w_list]
@@ -31,6 +31,7 @@ def main(args):
     tz_list =  [i.replace('t2w.nii.gz', 'tz.nii.gz') for i in t2w_list]
     for path_t2w, path_adc, path_dwi, path_lab, path_pre,path_tz,path_pz in zip(t2w_list, adc_list, dwi_list, lab_list, pre_list, tz_list,pz_list):
         if os.path.exists(path_adc) and os.path.exists(path_dwi) and os.path.exists(path_lab) and os.path.exists( path_pre):
+            
             #print('Processing {}...'.format(os.path.split(path_pre)[-1]))
             # t2w = nib.load(path_t2w).get_fdata()
             # adc = nib.load(path_adc).get_fdata()
@@ -75,7 +76,7 @@ def main(args):
     f_csv.close()
     print(np.nanmean(np.array(dice_mean)[:,1:].astype(np.float),axis=0))
     print('od', od_tp / (od_tp + od_fp), od_tp / gt_acc_lesion)
-    print(gt_acc_lesion)
+    print(gt_acc_lesion, pred_acc)
     print('gtpd', gt_tp/gt_acc_lesion, pd_tp/pred_acc)
 
 def removesamll(contours, thres=0.5):
@@ -107,22 +108,25 @@ def metrics(pred, target,t_zone,p_zone):
     pred_lesion=np.zeros(iters)
     gt_lesion=np.zeros(iters)
     dice_score=vxm.losses.Dice(with_logits=False)
-    pred_seg=copy.deepcopy(pred)
     for p in range(1,28):
-        if p/9==1:
+        pred_seg=copy.deepcopy(pred)
+        if p>9 and p<19:
+            thre=(p-9)/10
             pred_seg=t_zone*pred_seg
             target=t_zone*target
-        elif p/9==2:
+        elif p>18:
+            thre=(p-18)/10
             pred_seg=p_zone*pred_seg
             target=p_zone*target
-        thre=p%9
+        else:
+            thre=p/10
         pred_seg[pred_seg>thre]=1
         pred_seg[pred_seg<=thre]=0
 
         dice_vals[p-1]=dice_score.loss(pred_seg.reshape((1,)+pred_seg.shape+(1,)), target.reshape((1,)+pred_seg.shape+(1,)))
         surf_dist=sd.compute_surface_distances(np.array(pred_seg, dtype=bool), np.array(target, dtype=bool), (1,1,1))
         hausd_dist[p-1]=sd.compute_robust_hausdorff(surf_dist,95)
-        hausd_dist[np.isinf(hausd_dist)]=50
+        hausd_dist[np.isinf(hausd_dist)]=40
         prec, rec = precision_and_recall(target, pred_seg,2)
         precision[p-1]=prec[-1]
         recal[p-1]=rec[-1]
@@ -135,7 +139,7 @@ def metrics(pred, target,t_zone,p_zone):
         overlap_pd, number_tp_pd[p-1], pred_lesion[p-1]=pn_rate(target,  pred_seg, thre,direct='pred')
         overlap_gt, number_tp_gt[p-1], gt_lesion[p-1]=pn_rate(target,  pred_seg,thre, direct='gt')
 
-    return hausd_dist, dice_vals, precision, recal,number_tp_gt, number_tp_pd, od_acc_tp, od_acc_fp, number_lesion_tgt, pred_lesion
+    return hausd_dist, dice_vals, precision, recal,number_tp_gt, number_tp_pd, od_acc_tp, od_acc_fp, gt_lesion, pred_lesion
 
 
 if __name__=='__main__':

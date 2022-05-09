@@ -70,10 +70,10 @@ def OD_IOU(tgt, pred):
 def pn_rate(tgt, img, thre, direct='gt'):
     #img and tgt: 3d np array
     #tgt is label, img is predication
-    tgt=tgt.astype(np.bool)
-    img=img.astype(np.bool)
-    tgt=morphology.remove_small_holes(morphology.remove_small_objects(tgt,26, connectivity=3),26,connectivity=3)
-    img=morphology.remove_small_holes(morphology.remove_small_objects(img,26, connectivity=3),26,connectivity=3)
+    tgt=np.int(tgt)
+    pred=np.int(pred)
+    tgt=morphology.remove_small_holes(morphology.remove_small_objects(tgt,6),6)
+    img=morphology.remove_small_holes(morphology.remove_small_objects(img,6),6)
 
     if direct=='pred':
         label_image, number_of_labels=measure.label(img, background = 0, return_num = True, connectivity=1)
