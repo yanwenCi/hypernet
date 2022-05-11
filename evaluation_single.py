@@ -38,8 +38,10 @@ def main(args):
             # dwi = nib.load(path_dwi).get_fdata()
             lab = nib.load(path_lab).get_fdata()
             pre = nib.load(path_pre).get_fdata()
-            hausd_dist, dice_vals,number_tplesion_gt, number_tplesion_pd, gt_number, pred_number=metrics(pre, lab)
-            dice_mean.append([path_pre.split('/')[-1]]+hausd_dist.tolist() + dice_vals.tolist() + precision.tolist() + recal.tolist())
+            p_zone=nib.load(path_pz).get_fdata()
+            t_zone = nib.load(path_tz).get_fdata()
+            hausd_dist, dice_vals,number_tplesion_gt, number_tplesion_pd, gt_number, pred_number=metrics(pre, lab,t_zone,p_zone)
+            dice_mean.append([path_pre.split('/')[-1]]+hausd_dist.tolist() + dice_vals.tolist() )
             number_of_pg.append([path_pre.split('/')[-1]]+number_tplesion_gt.tolist() + number_tplesion_pd.tolist())
             #number_of_od.append([path_pre.split('/')[-1]]+od_acc_tp.tolist()+ od_acc_fp.tolist())
             number_of_pred.append([path_pre.split('/')[-1]]+pred_number.tolist()+[gt_number])
@@ -73,6 +75,21 @@ def main(args):
     #print('od', od_tp / (od_tp + od_fp), od_tp / gt_acc_lesion)
     print(gt_acc_lesion,gt_acc_lesion)
     print('gtpd', gt_tp/gt_acc_lesion, pd_tp/pred_acc)
+    recall, prec=gt_tp/gt_acc_lesion, pd_tp/pred_acc
+    crit1=[0.6]*9+[0.3]*9+[0.4]*9
+    crit2=[0.4]*9+[0.15]*9+[0.4]*9
+    res1=(np.array(recall)-np.array(crit1))**2
+    res2=(np.array(prec)-np.array(crit2))**2
+    res1=res1.reshape(3,9)
+    res2=res2.reshape(3,9)
+    find_prec,find_reca=[],[]
+    for k in range(3):
+        min1=np.median(np.where(res1[k,:]==np.amin(res1[k,:]))).astype(np.int)
+        min2=np.median(np.where(res2[k,:]==np.amin(res2[k,:]))).astype(np.int)
+        find_prec.append(prec[k*9+min1])         
+        find_reca.append(recall[k*9+min2])
+            
+    print('find reca and prec: ', find_reca,find_prec)
 
 def removesamll(contours, thres=0.5):
     n = len(contours)

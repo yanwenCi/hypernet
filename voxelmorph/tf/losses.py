@@ -56,7 +56,7 @@ class BinaryDiceLoss:
         return 1-dice
 
 class HyperLoss:
-    def __init__(self, weight=0.5):
+    def __init__(self, weight=0.75):
         self.ce_loss= tf.keras.losses.BinaryCrossentropy(from_logits=False, name='cross_entropy')
         self.dice_loss=BinaryDiceLoss()
         #self.hyperparam=hyperp
@@ -68,7 +68,7 @@ class HyperLoss:
         loss_value1=self.dice_loss.loss(y_true,y_pred)
         loss_value2=self.ce_loss(y_true,y_pred)
 
-        return loss_value1+loss_value2
+        return loss_value1*self.weight+loss_value2*(1-self.weight)
 
 class NCC:
     """
