@@ -212,6 +212,8 @@ with tf.device(device):
         p_zone[zone==1]=1
         t_zone=np.zeros_like(outputs[0])
         t_zone[zone==2]=1
+        w_zone=np.zeros_like(outputs[0])
+        w_zone[zone>0]=1
         # import matplotlib.pyplot as plt
         # plt.imshow(p_zone[0,:,:,46,0])
         # plt.show()
@@ -219,11 +221,12 @@ with tf.device(device):
         t_lesion=outputs[0]*t_zone
         p_predict=predicted.round()*p_zone
         t_predict=predicted.round()*t_zone
-        accuracy = accuracy_func.loss(outputs[0], predicted.round())
+        w_predict=predicted.round()*w_zone
+        accuracy = accuracy_func.loss(outputs[0], w_predict)#predicted.round())
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
        # dist evaluation
-        surf_dist=sd.compute_surface_distances(np.array(predicted.squeeze().round(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
+        surf_dist=sd.compute_surface_distances(np.array(w_predict.squeeze().round(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
         hausd_dist=sd.compute_robust_hausdorff(surf_dist,95)
         hausd_dist=min(40 ,hausd_dist)
         surf_dist_tz=sd.compute_surface_distances(np.array(t_predict.squeeze(), dtype=bool), np.array(t_lesion.squeeze(), dtype=bool), (1,1,1))
@@ -254,7 +257,7 @@ with tf.device(device):
         lesion_tp_num.append([number_tp_gt,number_tp_pd, number_tp_gt_tz,number_tp_pd_tz,number_tp_gt_pz,number_tp_pd_pz])
         #print('  ',name[0], accuracy, accuracy_t, accuracy_p)
         #print(' ' ,name[0], gt_lesion_tz,pred_lesion_tz,gt_lesion_pz,pred_lesion_pz)
-        if i%1==0:
+        if i%1000==0:
             seg_result = predicted.squeeze()
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
             vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice%d_%.4f.nii.gz' % (name[0].split('.')[0],i, accuracy)))        
