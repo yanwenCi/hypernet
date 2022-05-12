@@ -113,6 +113,34 @@ def removesamll(contours, thres=0.5):
             continue
     print('    Founding {} contours'.format(len(cv_contours)))
     return cv_contours
+def lesion_metric(pred, target_, t_zone, p_zone):
+    iters=9*3
+    od_gt_number=0
+    pred_number=np.zeros(iters)
+    number_tp_pd=np.zeros(iters)
+    number_tp_gt=np.zeros(iters)
+    pred_lesion=np.zeros(iters)
+    gt_lesion=np.zeros(iters)
+    for p in range(1,28):
+        pred_seg=copy.deepcopy(pred)
+        target=copy.deepcopy(target_)
+        if p>9 and p<19:
+            thre=(p-9)/10
+            pred_seg=t_zone*pred_seg
+            target=t_zone*target
+        elif p>18:
+            thre=(p-18)/10
+            pred_seg=p_zone*pred_seg
+            target=p_zone*target
+        else:
+            thre=p/10
+        pred_seg[pred_seg>thre]=1
+        pred_seg[pred_seg<=thre]=0
+        thre=[0.25]
+        overlap_pd, number_tp_pd[p-1], pred_lesion[p-1]=pn_rate(target,  pred_seg, thre,direct='pred')
+        overlap_gt, number_tp_gt[p-1], gt_lesion[p-1]=pn_rate(target,  pred_seg,thre, direct='gt')
+    return number_tp_gt, number_tp_pd, gt_lesion, pred_lesion
+
 
 def metrics(pred, target_,t_zone,p_zone):
     iters=9*3

@@ -34,7 +34,7 @@ import surface_distance as sd
 # tf.compat.v1.disable_eager_execution()
 from metrics import pn_rate
 from tensorflow.python.framework.ops import disable_eager_execution
-
+from evaluation import lesion_metric
 # disable_eager_execution()
 # tf.executing_eagerly()
 # tf.eagerly()
@@ -197,8 +197,8 @@ with tf.device(device):
     number=[]
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
-    #    if i>20:
-    #        break
+        #if i>10:
+        #    break
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs, zone, name = data
@@ -237,14 +237,15 @@ with tf.device(device):
         hausd_dist_pz=min(40,hausd_dist_pz)
         
         # lesion level
-        thresh=[0.25]
-        overlap_pd_tz, number_tp_pd_tz, pred_lesion_tz=pn_rate(t_lesion.squeeze(),t_predict.squeeze(), thresh ,direct='pred')
-        overlap_gt_tz, number_tp_gt_tz, gt_lesion_tz=pn_rate(t_lesion.squeeze(), t_predict.squeeze(),thresh, direct='gt')
-        overlap_pd_pz, number_tp_pd_pz, pred_lesion_pz=pn_rate(p_lesion.squeeze(),p_predict.squeeze(), thresh ,direct='pred')
-        overlap_gt_pz, number_tp_gt_pz, gt_lesion_pz=pn_rate(p_lesion.squeeze(), p_predict.squeeze(),thresh, direct='gt')
-        overlap_pd, number_tp_pd, pred_lesion=pn_rate(outputs[0].squeeze(),predicted.round().squeeze(), thresh ,direct='pred')
-        overlap_gt, number_tp_gt, gt_lesion=pn_rate(outputs[0].squeeze(), predicted.round().squeeze(), thresh, direct='gt')
+#        thresh=[0.25]
+#        overlap_pd_tz, number_tp_pd_tz, pred_lesion_tz=pn_rate(t_lesion.squeeze(),t_predict.squeeze(), thresh ,direct='pred')
+#        overlap_gt_tz, number_tp_gt_tz, gt_lesion_tz=pn_rate(t_lesion.squeeze(), t_predict.squeeze(),thresh, direct='gt')
+#        overlap_pd_pz, number_tp_pd_pz, pred_lesion_pz=pn_rate(p_lesion.squeeze(),p_predict.squeeze(), thresh ,direct='pred')
+#        overlap_gt_pz, number_tp_gt_pz, gt_lesion_pz=pn_rate(p_lesion.squeeze(), p_predict.squeeze(),thresh, direct='gt')
+#        overlap_pd, number_tp_pd, pred_lesion=pn_rate(outputs[0].squeeze(),predicted.round().squeeze(), thresh ,direct='pred')
+#        overlap_gt, number_tp_gt, gt_lesion=pn_rate(outputs[0].squeeze(), predicted.round().squeeze(), thresh, direct='gt')
         
+        gt_tp_lesion, pd_tp_lesion, gt_lesion, pred_lesion=lesion_metric(predicted.squeeze(),outputs[0].squeeze(),t_zone.squeeze(),p_zone.squeeze())
 
         if np.sum(p_lesion)<27:
             accuracy_p=np.nan
@@ -253,11 +254,13 @@ with tf.device(device):
             accuracy_t=np.nan
             hausd_dist_tz=np.nan
         accuracy_all.append([accuracy, accuracy_t, accuracy_p,hausd_dist,hausd_dist_tz,hausd_dist_pz])
-        lesion_all.append([gt_lesion, pred_lesion, gt_lesion_tz,pred_lesion_tz,gt_lesion_pz,pred_lesion_pz])
-        lesion_tp_num.append([number_tp_gt,number_tp_pd, number_tp_gt_tz,number_tp_pd_tz,number_tp_gt_pz,number_tp_pd_pz])
+        #lesion_all.append([gt_lesion[0], pred_lesion[0], gt_lesion[9],pred_lesion_tz[9],gt_lesion[18],pred_lesion[18]])
+        lesion_all.append(np.hstack((gt_lesion,pred_lesion)))
+        lesion_tp_num.append(np.hstack((gt_tp_lesion,pd_tp_lesion)))
+        #lesion_tp_num.append([number_tp_gt,number_tp_pd, number_tp_gt_tz,number_tp_pd_tz,number_tp_gt_pz,number_tp_pd_pz])
         #print('  ',name[0], accuracy, accuracy_t, accuracy_p)
         #print(' ' ,name[0], gt_lesion_tz,pred_lesion_tz,gt_lesion_pz,pred_lesion_pz)
-        if i%1000==0:
+        if i%100==0:
             seg_result = predicted.squeeze()
             #print('%d-th mean accuracy: %f' % (i, np.array(accuracy_all).mean(axis=0)))
             vxm.py.utils.save_volfile(seg_result, os.path.join(save_file, '%s_dice%d_%.4f.nii.gz' % (name[0].split('.')[0],i, accuracy)))        
@@ -270,6 +273,23 @@ with tf.device(device):
     sum_accu = np.array(accuracy_all).sum(axis=0)                                     
     print('std: ',np.round(np.nanstd(np.array(accuracy_all), axis=0),4).tolist())
     print('mean: ',np.round(np.nanmean(np.array(accuracy_all),axis=0),4).tolist())
-    print('lesion: ', np.sum(np.array(lesion_tp_num), axis=0)/np.sum(np.array(lesion_all),axis=0).tolist())
-    print('std: ',np.round(np.nanstd((np.array(lesion_tp_num)/np.array(lesion_all)), axis=0),4).tolist())
+    
+    acc_tp=np.sum(np.array(lesion_tp_num), axis=0)
+    acc_lesion=np.sum(np.array(lesion_all), axis=0)
+    recall,prec=acc_tp[:27]/acc_lesion[:27],acc_tp[27:]/acc_lesion[27:]
+    crit1=[0.6]*9+[0.4]*9+[0.6]*9
+    crit2=[0.4]*9+[0.2]*9+[0.4]*9
+    res1=(np.array(recall)-np.array(crit1))**2
+    res2=(np.array(prec)-np.array(crit2))**2
+    res1=res1.reshape(3,9)
+    res2=res2.reshape(3,9)
+    find_prec,find_reca=[],[]
+    for k in range(3):
+        min1=np.median(np.where(res1[k,:]==np.amin(res1[k,:]))).astype(np.int)
+        min2=np.median(np.where(res2[k,:]==np.amin(res2[k,:]))).astype(np.int)
+        find_prec.append(prec[k*9+min1])
+        find_reca.append(recall[k*9+min2])
+    print('lesion: ', find_reca[0],find_prec[0],find_reca[1], find_prec[1], find_reca[2], find_prec[2])
+    #print('lesion: ', np.sum(np.array(lesion_tp_num), axis=0)/np.sum(np.array(lesion_all),axis=0).tolist())
+    #print('std: ',np.round(np.nanstd((np.array(lesion_tp_num)/np.array(lesion_all)), axis=0),4).tolist())
     #print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t), sum_accu[2] / (len(accuracy_all) - number_p), sum_accu[3]/len(accuracy_all), sum_accu[4]/(len(accuracy_all)),sum_accu[5]/(len(accuracy_all)))
