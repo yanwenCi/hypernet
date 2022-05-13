@@ -26,24 +26,24 @@ for i in range(len(data)):
     y=y[4:]+y[0:4]
     no=[str(p) for p in y]
     no=int(''.join(no),2)
-    #path_log=os.path.join('checkpoints',f,'{}{}_log'.format(args.phase,no)) # for multi models
-    path_log=os.path.join('checkpoints',f,'{}/test_log'.format(no)) #for single model
+    path_log=os.path.join('checkpoints',f,'{}{}_log'.format(args.phase,no)) # for multi models
+    #path_log=os.path.join('checkpoints',f,'{}/test_log'.format(no)) #for single model
     if not os.path.exists( path_log):
         continue
     log=open(path_log,'r')
     log_=log.readlines()
-    log_line=log_[-3].split(' ')
+    log_line=log_[-2].split(' ')
     log_line=[i.replace('[','').strip(',') for i in log_line]
     log_line=list(filter(None, log_line))[1:7]
     log_line=[float(k.strip().strip('[').strip(']')) for k in log_line]
 #std   
-    log_std=log_[-4]
+    log_std=log_[-3]
     log_std=log_std.split(' ')
     log_std=[i.replace('[','').strip(',') for i in log_std]
     log_std=list(filter(None, log_std))[1:7]
     log_std=[float(k.strip().strip('[').strip(']')) for k in log_std]
 #lesion
-    log_lesion=log_[-2]
+    log_lesion=log_[-1]
     log_lesion=log_lesion.split(' ')
     log_lesion=[i.replace('[','').strip(',') for i in log_lesion]
     log_lesion=list(filter(None, log_lesion))[1:7]

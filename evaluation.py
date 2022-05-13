@@ -81,7 +81,7 @@ def main(args):
     print(gt_acc_lesion, pred_acc)
     print('gtpd', gt_tp/gt_acc_lesion, pd_tp/pred_acc)
     recall, prec=gt_tp/gt_acc_lesion, pd_tp/pred_acc
-    crit1=[0.6]*9+[0.3]*9+[0.4]*9
+    crit1=[0.6]*9+[0.3]*9+[0.6]*9
     crit2=[0.4]*9+[0.15]*9+[0.4]*9
     res1=(np.array(recall)-np.array(crit1))**2
     res2=(np.array(prec)-np.array(crit2))**2

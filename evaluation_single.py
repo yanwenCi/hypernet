@@ -73,10 +73,10 @@ def main(args):
     f_csv.close()
     print(np.mean(np.array(dice_mean)[:,1:].astype(np.float),axis=0))
     #print('od', od_tp / (od_tp + od_fp), od_tp / gt_acc_lesion)
-    print(gt_acc_lesion,gt_acc_lesion)
+    print(gt_acc_lesion,pred_acc)
     print('gtpd', gt_tp/gt_acc_lesion, pd_tp/pred_acc)
     recall, prec=gt_tp/gt_acc_lesion, pd_tp/pred_acc
-    crit1=[0.6]*9+[0.3]*9+[0.4]*9
+    crit1=[0.6]*9+[0.3]*9+[0.6]*9
     crit2=[0.4]*9+[0.15]*9+[0.4]*9
     res1=(np.array(recall)-np.array(crit1))**2
     res2=(np.array(prec)-np.array(crit2))**2
