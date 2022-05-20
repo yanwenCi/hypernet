@@ -7,23 +7,17 @@ import argparse
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('dir',  type=str,
                     help='an integer for the accumulator')
-parser.add_argument('npy', type=str)
-parser.add_argument('Y', type=str)
 parser.add_argument('phase',type=str)
 args = parser.parse_args()
-npy_file=args.npy
 
 f=args.dir
-model_dirs= [m for m in os.listdir(os.path.join('checkpoints',f)) if 'mix' in m]
-print(model_dirs)
-data=np.load(npy_file)
-Y=np.load(args.Y)
+model_dirs= [m for m in os.listdir(os.path.join('checkpoints',f)) if 'test' in m]
 new=[]
-for i in range(len(model_dirs)):
+for i,model_dir in enumerate(model_dirs):
     no=i
-    y=''.join([j for j in model_dirs[i] if j.isdigit()])
-    #path_log=os.path.join('checkpoints',f,'{}{}_log'.format(args.phase,no)) # for multi models
-    path_log=os.path.join('checkpoints',f,model_dirs[i],'test_log') #for single model
+    y=''.join([j for j in model_dir if j.isdigit()])
+    path_log=os.path.join('checkpoints',f,'{}{}_log'.format(args.phase,y)) # for multi models
+    #path_log=os.path.join('checkpoints',f,model_dirs[i],'test_log') #for single model
     if not os.path.exists( path_log):
         continue
     log=open(path_log,'r')
@@ -32,7 +26,7 @@ for i in range(len(model_dirs)):
     log_line=[i.replace('[','').strip(',') for i in log_line]
     log_line=list(filter(None, log_line))[1:7]
     log_line=[float(k.strip().strip('[').strip(']')) for k in log_line]
-    log_line=[k+0.04 for k in log_line[:3]]
+    log_line=[k for k in log_line[:3]]
 #std   
     log_std=log_[0]
     log_std=log_std.split(' ')
