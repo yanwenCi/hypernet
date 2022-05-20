@@ -185,7 +185,7 @@ def metrics(pred, target_,t_zone,p_zone):
         #od_iou, number_lesion_tgt, number_lesion_pred, tp_num, fp_num=OD_PR(target, pred_seg, 0.25)
         #od_acc_tp[p-1]=tp_num
         #od_acc_fp[p-1]=fp_num
-        thre=[0.25]
+        thre=[0.1]
         overlap_pd, number_tp_pd[p-1], pred_lesion[p-1]=pn_rate(target,  pred_seg, thre,direct='pred')
         overlap_gt, number_tp_gt[p-1], gt_lesion[p-1]=pn_rate(target,  pred_seg,thre, direct='gt')
 

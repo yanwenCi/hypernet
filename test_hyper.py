@@ -197,8 +197,8 @@ with tf.device(device):
     number=[]
     # prepare loss functions and compile model
     for i, data in enumerate(base_generator):
-        #if i>10:
-        #    break
+       # if i>10:
+       #     break
         hyper_val = random_hyperparam(args.hyper_num)
         hyp = np.array([hyper_val for _ in range(args.batch_size)])
         inputs, outputs, zone, name = data
@@ -273,12 +273,12 @@ with tf.device(device):
     sum_accu = np.array(accuracy_all).sum(axis=0)                                     
     print('std: ',np.round(np.nanstd(np.array(accuracy_all), axis=0),4).tolist())
     print('mean: ',np.round(np.nanmean(np.array(accuracy_all),axis=0),4).tolist())
-    
+    print('lesion: ', np.sum(np.array(lesion_tp_num), axis=0)/np.sum(np.array(lesion_all),axis=0).tolist())
     acc_tp=np.sum(np.array(lesion_tp_num), axis=0)
     acc_lesion=np.sum(np.array(lesion_all), axis=0)
     recall,prec=acc_tp[:27]/acc_lesion[:27],acc_tp[27:]/acc_lesion[27:]
-    crit1=[0.6]*9+[0.4]*9+[0.6]*9
-    crit2=[0.4]*9+[0.2]*9+[0.4]*9
+    crit1=[0.9]*9+[0.9]*9+[0.9]*9
+    crit2=[0.9]*9+[0.9]*9+[0.9]*9
     res1=(np.array(recall)-np.array(crit1))**2
     res2=(np.array(prec)-np.array(crit2))**2
     res1=res1.reshape(3,9)
