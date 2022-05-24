@@ -1,0 +1,23 @@
+Patient019753699_study_0.nii.gz dwi num 4
+Patient047366679_study_0.nii.gz dwi num 4
+Patient084275481_study_0.nii.gz dwi num 4
+Patient084275481_study_0.nii.gz adc_num 5
+Patient105718923_study_0.nii.gz dwi num 4
+Patient141201314_study_0.nii.gz dwi num 6
+Patient155091704_study_0.nii.gz dwi num 4
+Patient205634611_study_0.nii.gz dwi num 4
+Patient276592525_study_0.nii.gz dwi num 4
+Patient312892008_study_0.nii.gz dwi num 4
+Patient453566563_study_0.nii.gz dwi num 5
+Patient453566563_study_0.nii.gz adc_num 4
+Patient547874151_study_0.nii.gz dwi num 4
+Patient683036630_study_0.nii.gz adc_num 5
+Patient688954796_study_0.nii.gz dwi num 5
+Patient688976372_study_0.nii.gz dwi num 5
+Patient787745373_study_0.nii.gz adc_num 5
+Patient910907550_study_0.nii.gz dwi num 5
+Patient948084900_study_0.nii.gz dwi num 4
+Patient965633848_study_0.nii.gz dwi num 4
+adc [1, 2, 3, 4, 5] [707, 20, 5, 1, 3]
+dwi [1, 2, 3, 4, 5, 6] [105, 201, 412, 11, 4, 1]
+patient 861, pairs 1879, adc 736, dwi 734, both 705

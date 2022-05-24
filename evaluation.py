@@ -136,7 +136,7 @@ def lesion_metric(pred, target_, t_zone, p_zone):
             thre=p/10
         pred_seg[pred_seg>thre]=1
         pred_seg[pred_seg<=thre]=0
-        thre=[0.25]
+        thre=[0.05]
         overlap_pd, number_tp_pd[p-1], pred_lesion[p-1]=pn_rate(target,  pred_seg, thre,direct='pred')
         overlap_gt, number_tp_gt[p-1], gt_lesion[p-1]=pn_rate(target,  pred_seg,thre, direct='gt')
     return number_tp_gt, number_tp_pd, gt_lesion, pred_lesion

@@ -279,14 +279,15 @@ with tf.device(device):
     acc_tp=np.sum(np.array(lesion_tp_num), axis=0)
     acc_lesion=np.sum(np.array(lesion_all), axis=0)
     recall,prec=acc_tp[:27]/acc_lesion[:27],acc_tp[27:]/acc_lesion[27:]
-    print('lesion 0.5: ',recall[4],prec[4],recall[13],prec[13],recall[22],prec[22])
+    recall_=[1]+recall.tolist()+[0]
+    precision_=[0]+prec.tolist()+[1]
     auc_values=[]
     for sp in range(3):
         recall_,precision_=zip(*sorted(zip(recall[9*sp:9*(sp+1)].tolist(),prec[9*sp:9*(sp+1)].tolist())))
         recall_=[0]+list(recall_)+[1]
         precision_=[1]+list(precision_)+[0]
         auc_values.append(auc(np.array(recall_),np.array(precision_)))
-    print('auc: ',auc_values) 
+    print('auc: ',auc_value) 
     crit1=[0.8]*9+[0.8]*9+[0.8]*9
     crit2=[0.8]*9+[0.8]*9+[0.8]*9
     res1=(np.array(recall)-np.array(crit1))**2
