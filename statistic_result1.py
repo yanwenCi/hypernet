@@ -11,15 +11,16 @@ parser.add_argument('phase',type=str)
 args = parser.parse_args()
 
 f=args.dir
-model_dirs= [m for m in os.listdir(os.path.join('checkpoints',f)) if 'test' in m]
+model_dirs= [m for m in os.listdir(os.path.join('checkpoints',f)) if 'mix' in m]
 new=[]
 for i,model_dir in enumerate(model_dirs):
     no=i
     y=''.join([j for j in model_dir if j.isdigit()])
-    path_log=os.path.join('checkpoints',f,'{}_log{}'.format(args.phase,y)) # for multi models
-    #path_log=os.path.join('checkpoints',f,model_dirs[i],'test_log') #for single model
+    #path_log=os.path.join('checkpoints',f,'{}_log{}'.format(args.phase,y)) # for multi models
+    path_log=os.path.join('checkpoints',f,model_dirs[i],'test_log') #for single model
     if not os.path.exists( path_log):
         continue
+    print(path_log)
     log=open(path_log,'r')
     log_=log.readlines()
     log_line=log_[1].split(' ')

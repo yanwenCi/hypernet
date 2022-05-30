@@ -11,7 +11,7 @@ pairs_num=0
 count=0
 adc_num_list,dwi_num_list=[],[]
 for g, sp in enumerate(split):
-    fpath='/raid/candi/Wen/ProstateSeg/hypernet/data/data_lesion_hb_cross2/'+sp
+    fpath='/raid/candi/Wen/ProstateSeg/hypernet/data/data_lesion_hb_cross1/'+sp
     if not os.path.exists(fpath):
             os.makedirs(fpath, mode=0o777)
     f.append(open(join(fpath,'pair_path_list.txt'), 'w'))
@@ -58,9 +58,9 @@ for img_name in sorted(list_img):
                     +' '+join(path, mods[4], adc_name)+' '+join(path,mods[3],dwi_name)+'\n'
         count+=1
 
-    if count%6==1:
+    if count%6==0:
         f[1].write(line)
-    elif count%6==2:
+    elif count%6==1:
         f[2].write(line)
     else:
         f[0].write(line)

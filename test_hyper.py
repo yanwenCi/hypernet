@@ -274,11 +274,12 @@ with tf.device(device):
     sum_accu = np.array(accuracy_all).sum(axis=0)                                     
     print('std: ',np.round(np.nanstd(np.array(accuracy_all), axis=0),4).tolist())
     print('mean: ',np.round(np.nanmean(np.array(accuracy_all),axis=0),4).tolist())
-    #print('lesion: ', np.sum(np.array(lesion_tp_num), axis=0)/np.sum(np.array(lesion_all),axis=0).tolist())
+    print('lesion: ', np.sum(np.array(lesion_tp_num), axis=0)/np.sum(np.array(lesion_all),axis=0).tolist())
     #print('lesion count: ', np.sum(np.array(lesion_tp_num), axis=0),np.sum(np.array(lesion_all),axis=0).tolist())
     acc_tp=np.sum(np.array(lesion_tp_num), axis=0)
     acc_lesion=np.sum(np.array(lesion_all), axis=0)
     recall,prec=acc_tp[:27]/acc_lesion[:27],acc_tp[27:]/acc_lesion[27:]
+    prec[np.isnan(prec)]=0
     print('lesion0.5: ',recall[4],prec[4],recall[13],prec[13],recall[22],prec[22])
     auc_values=[]
     for sp in range(3):

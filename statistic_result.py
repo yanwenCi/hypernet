@@ -32,6 +32,7 @@ for i in range(len(data)):
         continue
     log=open(path_log,'r')
     log_=log.readlines()
+    print(len(log_))
     log_line=log_[1].split(' ')
     log_line=[i.replace('[','').strip(',') for i in log_line]
     log_line=list(filter(None, log_line))[1:7]
@@ -49,14 +50,14 @@ for i in range(len(data)):
     log_lesion=list(filter(None, log_lesion))[1:7]
     log_lesion=[float(k.strip().strip('[').strip(']')) for k in log_lesion]
 #auc
-    log_auc=log_[3]
+    log_auc=log_[-2]
     log_auc=log_auc.split(' ')
     log_auc=[i.replace('[','').strip(',') for i in log_auc]
     log_auc=list(filter(None,log_auc))[1:4]
     log_auc=[float(k.strip().strip('[').strip(']')) for k in log_auc]
 
 #lesion0.5
-    log_lesion5=log_[2]
+    log_lesion5=log_[-3]
     log_lesion5=log_lesion5.split(':')[-1].split(' ')
     log_lesion5=[i.replace('[','').strip(',') for i in log_lesion5]
     log_lesion5=list(filter(None, log_lesion5))[0:6]
