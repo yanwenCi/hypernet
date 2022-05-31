@@ -32,7 +32,7 @@ for i in range(len(data)):
         continue
     log=open(path_log,'r')
     log_=log.readlines()
-    print(len(log_))
+    print(path_log,len(log_))
     log_line=log_[1].split(' ')
     log_line=[i.replace('[','').strip(',') for i in log_line]
     log_line=list(filter(None, log_line))[1:7]
