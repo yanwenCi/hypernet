@@ -11,13 +11,13 @@ parser.add_argument('phase',type=str)
 args = parser.parse_args()
 
 f=args.dir
-model_dirs= [m for m in os.listdir(os.path.join('checkpoints',f)) if 'mix' in m]
+model_dirs= [m for m in os.listdir(os.path.join('checkpoints',f)) if 'test_log' in m]
 new=[]
 for i,model_dir in enumerate(model_dirs):
     no=i
     y=''.join([j for j in model_dir if j.isdigit()])
-    #path_log=os.path.join('checkpoints',f,'{}_log{}'.format(args.phase,y)) # for multi models
-    path_log=os.path.join('checkpoints',f,model_dirs[i],'test_log') #for single model
+    path_log=os.path.join('checkpoints',f,'{}_log{}'.format(args.phase,y)) # for multi models
+    #path_log=os.path.join('checkpoints',f,model_dirs[i],'test_log') #for single model
     if not os.path.exists( path_log):
         continue
     print(path_log)
@@ -35,21 +35,21 @@ for i,model_dir in enumerate(model_dirs):
     log_std=list(filter(None, log_std))[1:7]
     log_std=[float(k.strip().strip('[').strip(']')) for k in log_std]
 #lesion
-    log_lesion=log_[4]
+    log_lesion=log_[-1]
     log_lesion=log_lesion.split(' ')
     log_lesion=[i.replace('[','').strip(',') for i in log_lesion]
     log_lesion=list(filter(None, log_lesion))[1:7]
     log_lesion=[float(k.strip().strip('[').strip(']')) for k in log_lesion]
 
 #auc
-    log_auc=log_[3]
+    log_auc=log_[-2]
     log_auc=log_auc.split(' ')
     log_auc=[i.replace('[','').strip(',') for i in log_auc]
     log_auc=list(filter(None,log_auc))[1:4]
     log_auc=[float(k.strip().strip('[').strip(']')) for k in log_auc]
 
 #lesion0.5
-    log_lesion5=log_[2]
+    log_lesion5=log_[-3]
     log_lesion5=log_lesion5.split(':')[-1].split(' ')
     log_lesion5=[i.replace('[','').strip(',') for i in log_lesion5]
     log_lesion5=list(filter(None, log_lesion5))[0:6]

@@ -252,6 +252,6 @@ with tf.device(device):
         find_reca.append(recall[k*9+min2])
     print('lesion: ', find_reca[0],find_prec[0],find_reca[1], find_prec[1], find_reca[2], find_prec[2])
 
-    #print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),
-#          sum_accu[2] / (len(accuracy_all) - number_p), sum_accu[3]/len(accuracy_all),sum_accu[4]/(len(accuracy_all)),sum_accu[5]/(len(accuracy_all)))
+    print(sum_accu[0] / len(accuracy_all), sum_accu[1] / (len(accuracy_all) - number_t),
+          sum_accu[2] / (len(accuracy_all) - number_p), sum_accu[3]/len(accuracy_all),sum_accu[4]/(len(accuracy_all)),sum_accu[5]/(len(accuracy_all)))
 

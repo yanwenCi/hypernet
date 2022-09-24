@@ -20,7 +20,7 @@ for i in range(len(data)):
         print(i, np.round(a,4))
         #cmd.append('python train_hypermorph.py --img-list data/data_lesion_cross1/ --model-dir checkpoints/combiner2_cross1/{}  --mod 2  --gpu 2 --epoch 20  --batch-size 4  --steps-per-epoch 300  --hyper-val ,{:>6f},{:>6f},{:>6f},{:>6f}\n'.format(i,a,b,c,d))
 
-        cmd.append('python test_hyper.py --img-list data/data_lesion_cross2/ --model-dir checkpoints/hyper2_cross2  --mod 2 --load-weights 292  --grid-search True  --gpu 2 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/hyper2_cross2/{} >checkpoints/hyper2_cross2/valid{}_log\n'.format(a,b,c,d,no,no))
+        cmd.append('python test_hyper.py --img-list data/data_lesion_hb_cross3/ --model-dir checkpoints/hyper2_hb_cross3  --mod 2 --load-weights 201  --grid-search True  --gpu 2 --hyper_val ,{:>6f},{:>6f},{:>6f},{:>6f}   --pred-dir Pred_dir/hyper2_hb_cross3/{} >checkpoints/hyper2_hb_cross3/valid{}_log\n'.format(a,b,c,d,no,no))
 
 f.writelines(cmd)
 f.close()
