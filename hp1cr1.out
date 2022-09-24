@@ -1,4 +1,0 @@
-  File "train_hypermorph.py", line 111
-    inputs = (*inputs, hyp)
-              ^
-SyntaxError: invalid syntax
