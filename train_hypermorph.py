@@ -122,7 +122,7 @@ def hyp_generator_valid():
 
 if args.mod ==0:
     # weighted wo bias 0
-    args.activation = False
+    args.activation = 'sigmoid'
     args.from_logits=False
 elif args.mod==1:
     #weighted w bias 
@@ -132,7 +132,7 @@ elif args.mod==1:
 elif args.mod ==2:
     #weighted logistic w bias
     args.hyper_num+=1
-    args.activation = True
+    args.activation = None
     args.from_logits=False#True
 elif args.mod==3:
     #logistic w/ bias

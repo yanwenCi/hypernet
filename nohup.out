@@ -1,0 +1,44 @@
+2022-09-24 12:32:18.287712: I tensorflow/core/profiler/lib/profiler_session.cc:131] Profiler session initializing.
+2022-09-24 12:32:18.287774: I tensorflow/core/profiler/lib/profiler_session.cc:146] Profiler session started.
+2022-09-24 12:32:18.287834: I tensorflow/core/profiler/internal/gpu/cupti_tracer.cc:1614] Profiler found 1 GPUs
+2022-09-24 12:32:18.304263: I tensorflow/core/profiler/lib/profiler_session.cc:164] Profiler session tear down.
+2022-09-24 12:32:18.304494: I tensorflow/core/profiler/internal/gpu/cupti_tracer.cc:1748] CUPTI activity buffer flushed
+[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+Traceback (most recent call last):
+  File "train_nohyper.py", line 136, in <module>
+    sample_shape = next(generator)[0][0].shape
+  File "train_nohyper.py", line 111, in hyp_generator
+    inputs, outputs = next(base_generator)
+  File "/raid/candi/Wen/ProstateSeg/hypernet/voxelmorph/generators.py", line 320, in multi_mods_gen
+    scan1, scan2, scan3, msk= next(gen)
+  File "/raid/candi/Wen/ProstateSeg/hypernet/voxelmorph/generators.py", line 196, in multivolgen
+    imgs = [py.utils.load_volfile(vol_names[i], **load_params) for i in indices]
+  File "/raid/candi/Wen/ProstateSeg/hypernet/voxelmorph/generators.py", line 196, in <listcomp>
+    imgs = [py.utils.load_volfile(vol_names[i], **load_params) for i in indices]
+  File "/raid/candi/Wen/ProstateSeg/hypernet/voxelmorph/py/utils.py", line 103, in load_volfile
+    vol = img.get_data().squeeze()
+  File "/raid/candi/Wen/ProstateSeg/py36/lib/python3.6/site-packages/nibabel/deprecator.py", line 183, in deprecated_func
+    return func(*args, **kwargs)
+  File "/raid/candi/Wen/ProstateSeg/py36/lib/python3.6/site-packages/nibabel/dataobj_images.py", line 207, in get_data
+    data = np.asanyarray(self._dataobj)
+  File "/raid/candi/Wen/ProstateSeg/py36/lib/python3.6/site-packages/numpy/core/_asarray.py", line 136, in asanyarray
+    return array(a, dtype, copy=False, order=order, subok=True)
+  File "/raid/candi/Wen/ProstateSeg/py36/lib/python3.6/site-packages/nibabel/arrayproxy.py", line 391, in __array__
+    arr = self._get_scaled(dtype=dtype, slicer=())
+  File "/raid/candi/Wen/ProstateSeg/py36/lib/python3.6/site-packages/nibabel/arrayproxy.py", line 358, in _get_scaled
+    scaled = apply_read_scaling(self._get_unscaled(slicer=slicer), scl_slope, scl_inter)
+  File "/raid/candi/Wen/ProstateSeg/py36/lib/python3.6/site-packages/nibabel/arrayproxy.py", line 337, in _get_unscaled
+    mmap=self._mmap)
+  File "/raid/candi/Wen/ProstateSeg/py36/lib/python3.6/site-packages/nibabel/volumeutils.py", line 522, in array_from_file
+    n_read = infile.readinto(data_bytes)
+  File "/usr/lib/python3.6/gzip.py", line 276, in read
+    return self._buffer.read(size)
+  File "/usr/lib/python3.6/_compression.py", line 68, in readinto
+    data = self.read(len(byte_view))
+  File "/usr/lib/python3.6/gzip.py", line 471, in read
+    uncompress = self._decompressor.decompress(buf, size)
+KeyboardInterrupt
+  File "test_hyper.py", line 205
+    inputs = (*inputs, hyp)
+              ^
+SyntaxError: invalid syntax

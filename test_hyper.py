@@ -131,9 +131,9 @@ if args.mod ==2 :
     # weighted 0
     # logic 1
     args.hyper_num += 1
-    args.activation=True
+    args.activation=None
 elif args.mod==0:
-    args.activation=False
+    args.activation='sigmoid'
 #elif args.mod==3:
     
 
