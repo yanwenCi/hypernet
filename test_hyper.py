@@ -90,7 +90,7 @@ parser.add_argument('--image-sigma', type=float, default=0.05,
                     help='estimated image noise for mse image scaling (default: 0.05)')
 parser.add_argument('--oversample-rate', type=float, default=1,
                     help='hyperparameter end-point over-sample rate (default 0.2)')
-parser.add_argument('--hyper_val', type=str, default=None)
+parser.add_argument('--hyper-val', type=str, default=None)
 args = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu

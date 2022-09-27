@@ -1416,7 +1416,7 @@ class UnetDense(ne.modelio.LoadableModel):
             half_res=unet_half_res,
             hyp_input=None,
             hyp_tensor=None,
-            final_activation_function='sigmoid',#activate,
+            final_activation_function=activate,
             name='%s_unet%d' % (name,i),
             output_nc=trg_feats
         )
@@ -1435,7 +1435,7 @@ class UnetDense(ne.modelio.LoadableModel):
         #hyp_ = tf.constant([[18.17,18.17,-0.2,-8.53]])
         outputs = weight_sum_layer(outputs, hyp_input)
 
-        if activate:
+        if not activate:
             outputs = tf.keras.activations.sigmoid(outputs)
 
         # outputs =  tf.concat((seg1,seg2,seg3),-1)
