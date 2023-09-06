@@ -225,6 +225,7 @@ with tf.device(device):
         accuracy = accuracy_func.loss(outputs[0], w_predict)#predicted.round())
         accuracy_p = accuracy_func.loss(p_lesion, p_predict)
         accuracy_t = accuracy_func.loss(t_lesion, t_predict)
+        print(accuracy)
        # dist evaluation
         surf_dist=sd.compute_surface_distances(np.array(w_predict.squeeze().round(), dtype=bool), np.array(outputs[0].squeeze(), dtype=bool), (1,1,1))
         hausd_dist=sd.compute_robust_hausdorff(surf_dist,95)

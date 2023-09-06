@@ -277,16 +277,20 @@ def single_mods_gen(vol_names,  batch_size=1, test=False, type=1,  **kwargs):
             scan = next(gen)
             if type<3:
                 invols = [scan[type]]
-            else:
+            elif type ==3:
                 invols = [np.concatenate((scan[0],scan[1],scan[2]), axis=-1)]
+            elif type==4:
+                invols = [(scan[0]+scan[1] + scan[2])]
             outvols = [scan[3]]
             yield (invols, outvols, scan[4], scan[5])
         else:
             scan= next(gen)
             if type<3:
                 invols = [scan[type]]
-            else:
+            elif type==3:
                 invols = [np.concatenate((scan[0],scan[1],scan[2]),axis=-1)]
+            elif type==4:
+                invols = [(scan[0]+scan[1] + scan[2])]
             outvols = [scan[3]]
             #outvols = [msk]
             yield (invols, outvols)

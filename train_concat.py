@@ -99,7 +99,7 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 # no need to append an extra feature axis if data is multichannel
 add_feat_axis = not args.multichannel
     # scan-to-scan generator
-base_generator = vxm.generators.single_mods_gen(
+base_generator = vxm.generators.multi_mods_gen(
         args.img_list,phase='train', batch_size=args.batch_size, add_feat_axis=add_feat_axis, type=args.type)
 
 base_generator_valid = vxm.generators.single_mods_gen(

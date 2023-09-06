@@ -206,6 +206,7 @@ with tf.device(device):
             accuracy_t=np.nan
             hausd_dist_tz=np.nan
         accuracy_all.append([accuracy, accuracy_t, accuracy_p,hausd_dist,hausd_dist_tz,hausd_dist_pz])
+        print(accuracy)
         lesion_all.append(np.hstack((gt_lesion,pred_lesion)))
         lesion_tp_num.append(np.hstack((gt_tp_lesion,pd_tp_lesion)))
         #print('  ',name[0], accuracy, accuracy_t, accuracy_p)
