@@ -55,12 +55,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 #print(gpu_avilable)
 
 accuracy_func=vxm.losses.Dice(with_logits=False)
-preds_file = glob.glob(f'../../nnUNet/nnUNet_raw/Dataset005_prostate/{args.model_name}/*.nii.gz')
+preds_file = glob.glob(f'../nnUnet/nnUNet_raw/Dataset005_prostate/{args.model_name}/*.nii.gz')
 preds_file = list(sorted(preds_file))
+print(len(preds_file))
 labels_file = [i.replace(args.model_name, 'labelsTs') for  i in preds_file]#glob.glob('../../nnUNet/nnUNet_raw/Dataset005_prostate/labelsTs/*.nii.gz')
 zones_file = [i.replace(args.model_name, 'zonesTs') for  i in preds_file]#glob.glob('../../nnUNet/nnUNet_raw/Dataset005_prostate/zonesTs/*.nii.gz')
     # prepare loss functions and compile model
-print(len(labels_file))
 
 def test_loader(label_file, pred_file, zone_file):
     patient = label_file.split('/')[-1].split('_')[0]
@@ -160,8 +160,8 @@ def predicting():
     res2=res2.reshape(3,9)
     find_prec,find_reca=[],[]
     for k in range(3):
-        min1=np.median(np.where(res1[k,:]==np.amin(res1[k,:]))).astype(np.int)
-        min2=np.median(np.where(res2[k,:]==np.amin(res2[k,:]))).astype(np.int)
+        min1=np.median(np.where(res1[k,:]==np.amin(res1[k,:]))).astype(int)
+        min2=np.median(np.where(res2[k,:]==np.amin(res2[k,:]))).astype(int)
         find_prec.append(prec[k*9+min1])
         find_reca.append(recall[k*9+min2])
     print('lesion: ', find_reca[0],find_prec[0],find_reca[1], find_prec[1], find_reca[2], find_prec[2])

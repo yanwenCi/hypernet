@@ -55,6 +55,38 @@ def OD_PR(tgt, img, thre):
     return np.array(iou_metric), tot_lesion_tgt,number_of_preds, tp_number, fp_number
                    
 
+def lesion_size(tgt, img):
+    # ltgt is label, img is prediction
+    dice, size_gt, size_pred = [], [], []
+    label_tgt, number_of_tgts=measure.label(tgt, background = 0, return_num = True, connectivity=1)
+    label_pred, number_of_preds=measure.label(img, background = 0, return_num = True, connectivity=1)
+    tp_list=[]
+    # eliminate  small lesion in prediction
+    # computing precision and recall
+    for j,region in zip(range(number_of_tgts),measure.regionprops(label_tgt, intensity_image=tgt)):
+        lesion_tgt=np.zeros(tgt.shape)
+        if region.area<9:
+            continue
+            # eliminate small lesion in gt
+        else:
+            for i,region2 in zip(range(number_of_preds),measure.regionprops(label_pred, intensity_image=img)):
+                lesion_pred=np.zeros(img.shape)
+                if region2.area<9:
+
+                    continue
+                    # tp lesion is counted once only
+                elif i in tp_list:
+                    continue
+                else:
+                    lesion_tgt[label_tgt==j+1]=1
+                    lesion_pred[label_pred==i+1]=1
+                    dice.append((2*np.sum(lesion_tgt*lesion_pred))/(np.sum(lesion_tgt)+np.sum(lesion_pred)))
+                    if dice[-1]>0.1:
+                        tp_list.append(i)
+                    size_gt.append(np.sum(lesion_tgt))
+                    size_pred.append(np.sum(lesion_pred))
+    return size_pred, size_gt, dice
+
 
 def OD_IOU(tgt, pred):
     tgt=tgt.reshape(1,-1)
@@ -70,8 +102,8 @@ def OD_IOU(tgt, pred):
 def pn_rate(tgt, img, thre, direct='gt'):
     #img and tgt: 3d np array
     #tgt is label, img is predication
-    tgt=tgt.astype(np.bool)
-    img=img.astype(np.bool)
+    tgt=tgt.astype(bool)
+    img=img.astype(bool)
     tgt=morphology.remove_small_holes(morphology.remove_small_objects(tgt,26, connectivity=3),26,connectivity=3)
     img=morphology.remove_small_holes(morphology.remove_small_objects(img,26, connectivity=3),26,connectivity=3)
 
